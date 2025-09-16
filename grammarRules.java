@@ -1,4 +1,46 @@
+import java.util.HashMap;
+import java.util.Map;
+
 public class grammarRules {
+    public static final Map<String, String> keywords = new HashMap<>();
+
+    public grammarRules() {
+        keywords.put("glob","");
+        keywords.put("proc","");
+        keywords.put("func","");
+        keywords.put("main","");
+        keywords.put("{","");
+        keywords.put("}","");
+        keywords.put("(","");
+        keywords.put(")","");
+        keywords.put(";","");
+        keywords.put("return","");
+        keywords.put("local","");
+        keywords.put("var","");
+        keywords.put("halt","");
+        keywords.put("print","");
+        keywords.put("=","");
+        keywords.put("while","");
+        keywords.put("do","");
+        keywords.put("until","");
+        keywords.put("if","");
+        keywords.put("else","");
+        keywords.put("neg","");
+        keywords.put("not","");
+        keywords.put("eq","");
+        keywords.put(">","");
+        keywords.put("or","");
+        keywords.put("and","");
+        keywords.put("plus","");
+        keywords.put("minus","");
+        keywords.put("mult","");
+        keywords.put("div","");
+    }
+
+    
+    
+
+
     public static void SPL_PROG(){}
     public static void VARIABLES() {}
     public static void VAR() {}
