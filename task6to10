@@ -1,0 +1,700 @@
+package semantic;
+
+import java.util.*;
+
+// ============= SECTION 6: SEMANTIC RULE CHECKER =============
+
+/**
+ * Rule Validator Interface - Strategy pattern for diff. validation rules
+ */
+public interface RuleValidator {
+    List<RuleViolation> validate(SymbolTable symbolTable);
+    String getRuleName();
+    int getRulePriority();
+}
+
+/**
+ * Everywhere Scope Rule - validates conflicts between variables, functions, & procedures
+ */
+public class EverywhereConflictRule implements RuleValidator {
+    @Override
+    public List<RuleViolation> validate(SymbolTable symbolTable) {
+        List<RuleViolation> violations = new ArrayList<>();
+        
+        violations.addAll(checkVariableFunctionConflict(symbolTable));
+        violations.addAll(checkVariableProcedureConflict(symbolTable));
+        violations.addAll(checkFunctionProcedureConflict(symbolTable));
+        
+        return violations;
+    }
+    
+    private List<RuleViolation> checkVariableFunctionConflict(SymbolTable symbolTable) {
+        List<RuleViolation> violations = new ArrayList<>();
+        Set<SymbolEntry> globalVars = symbolTable.getSymbolsInScope(ScopeType.GLOBAL);
+        Set<SymbolEntry> functions = symbolTable.getSymbolsInScope(ScopeType.FUNCTION_SCOPE);
+        
+        for (SymbolEntry var : globalVars) {
+            for (SymbolEntry func : functions) {
+                if (var.getName().equals(func.getName())) {
+                    violations.add(new RuleViolation(
+                        RuleType.VARIABLE_FUNCTION_CONFLICT,
+                        Arrays.asList(var, func),
+                        String.format("Variable '%s' conflicts with function '%s' in Everywhere scope", 
+                                    var.getName(), func.getName()),
+                        ErrorSeverity.ERROR,
+                        var.getDeclarationLocation()
+                    ));
+                }
+            }
+        }
+        
+        return violations;
+    }
+    
+    private List<RuleViolation> checkVariableProcedureConflict(SymbolTable symbolTable) {
+        List<RuleViolation> violations = new ArrayList<>();
+        Set<SymbolEntry> globalVars = symbolTable.getSymbolsInScope(ScopeType.GLOBAL);
+        Set<SymbolEntry> procedures = symbolTable.getSymbolsInScope(ScopeType.PROCEDURE_SCOPE);
+        
+        for (SymbolEntry var : globalVars) {
+            for (SymbolEntry proc : procedures) {
+                if (var.getName().equals(proc.getName())) {
+                    violations.add(new RuleViolation(
+                        RuleType.VARIABLE_PROCEDURE_CONFLICT,
+                        Arrays.asList(var, proc),
+                        String.format("Variable '%s' conflicts with procedure '%s' in Everywhere scope", 
+                                    var.getName(), proc.getName()),
+                        ErrorSeverity.ERROR,
+                        var.getDeclarationLocation()
+                    ));
+                }
+            }
+        }
+        
+        return violations;
+    }
+    
+    private List<RuleViolation> checkFunctionProcedureConflict(SymbolTable symbolTable) {
+        List<RuleViolation> violations = new ArrayList<>();
+        Set<SymbolEntry> functions = symbolTable.getSymbolsInScope(ScopeType.FUNCTION_SCOPE);
+        Set<SymbolEntry> procedures = symbolTable.getSymbolsInScope(ScopeType.PROCEDURE_SCOPE);
+        
+        for (SymbolEntry func : functions) {
+            for (SymbolEntry proc : procedures) {
+                if (func.getName().equals(proc.getName())) {
+                    violations.add(new RuleViolation(
+                        RuleType.FUNCTION_PROCEDURE_CONFLICT,
+                        Arrays.asList(func, proc),
+                        String.format("Function '%s' conflicts with procedure '%s' in Everywhere scope", 
+                                    func.getName(), proc.getName()),
+                        ErrorSeverity.ERROR,
+                        func.getDeclarationLocation()
+                    ));
+                }
+            }
+        }
+        
+        return violations;
+    }
+    
+    @Override
+    public String getRuleName() {
+        return "Everywhere Scope Conflict Rule";
+    }
+    
+    @Override
+    public int getRulePriority() {
+        return 1; // high priority
+    }
+}
+
+/**
+ * Variable Duplicate Rule - validates duplicate variable declarations within same scope
+ */
+public class VariableDuplicateRule implements RuleValidator {
+    @Override
+    public List<RuleViolation> validate(SymbolTable symbolTable) {
+        List<RuleViolation> violations = new ArrayList<>();
+        
+        // check duplicates in each scope type
+        for (ScopeType scope : ScopeType.values()) {
+            violations.addAll(findDuplicatesInScope(symbolTable, scope));
+        }
+        
+        return violations;
+    }
+    
+    private List<RuleViolation> findDuplicatesInScope(SymbolTable symbolTable, ScopeType scope) {
+        List<RuleViolation> violations = new ArrayList<>();
+        Set<SymbolEntry> symbols = symbolTable.getSymbolsInScope(scope);
+        
+        // group symbols by name within this scope
+        Map<String, List<SymbolEntry>> nameGroups = CollectionUtils.groupBy(
+            new ArrayList<>(symbols),
+            SymbolEntry::getName
+        );
+        
+        // find groups w. more than one symbol (duplicates)
+        for (Map.Entry<String, List<SymbolEntry>> entry : nameGroups.entrySet()) {
+            List<SymbolEntry> group = entry.getValue();
+            if (group.size() > 1) {
+                // Filter for variables only
+                List<SymbolEntry> duplicateVars = group.stream()
+                    .filter(s -> s.getType() == SymbolType.VARIABLE)
+                    .collect(ArrayList::new, (list, item) -> list.add(item), ArrayList::addAll);
+                
+                if (duplicateVars.size() > 1) {
+                    violations.add(new RuleViolation(
+                        RuleType.DUPLICATE_VARIABLE_DECLARATION,
+                        duplicateVars,
+                        String.format("Variable '%s' declared multiple times in %s scope", 
+                                    entry.getKey(), scope.name()),
+                        ErrorSeverity.ERROR,
+                        duplicateVars.get(0).getDeclarationLocation()
+                    ));
+                }
+            }
+        }
+        
+        return violations;
+    }
+    
+    @Override
+    public String getRuleName() {
+        return "Variable Duplicate Declaration Rule";
+    }
+    
+    @Override
+    public int getRulePriority() {
+        return 2;
+    }
+}
+
+// ============= SECTION 7: CONFLICT DETECTION ALGORITHMS =============
+
+/**
+ * Name Conflict Detector - identifies conflicts between symbols
+ */
+public class ConflictDetector {
+    
+    public List<Conflict> findConflicts(List<SymbolEntry> symbols) {
+        List<Conflict> conflicts = new ArrayList<>();
+        
+        // group symbols by name
+        Map<String, List<SymbolEntry>> nameGroups = groupByName(symbols);
+        
+        // analyze each group for conflicts
+        for (Map.Entry<String, List<SymbolEntry>> entry : nameGroups.entrySet()) {
+            conflicts.addAll(analyzeGroup(entry.getValue()));
+        }
+        
+        return conflicts;
+    }
+    
+    public Map<String, List<SymbolEntry>> groupByName(List<SymbolEntry> symbols) {
+        Map<String, List<SymbolEntry>> groups = new HashMap<>();
+        
+        for (SymbolEntry symbol : symbols) {
+            groups.computeIfAbsent(symbol.getName(), k -> new ArrayList<>()).add(symbol);
+        }
+        
+        return groups;
+    }
+    
+    public List<Conflict> analyzeGroup(List<SymbolEntry> group) {
+        List<Conflict> conflicts = new ArrayList<>();
+        
+        if (group.size() < 2) {
+            return conflicts; // No conflict possible
+        }
+        
+        // Check all pairs for conflicts
+        for (int i = 0; i < group.size(); i++) {
+            for (int j = i + 1; j < group.size(); j++) {
+                SymbolEntry symbol1 = group.get(i);
+                SymbolEntry symbol2 = group.get(j);
+                
+                Conflict conflict = detectConflictBetween(symbol1, symbol2);
+                if (conflict != null) {
+                    conflicts.add(conflict);
+                }
+            }
+        }
+        
+        return conflicts;
+    }
+    
+    private Conflict detectConflictBetween(SymbolEntry symbol1, SymbolEntry symbol2) {
+        // same scope conflicts
+        if (symbol1.getScope() == symbol2.getScope()) {
+            if (symbol1.getType() == SymbolType.VARIABLE && symbol2.getType() == SymbolType.VARIABLE) {
+                return new Conflict(ConflictType.DUPLICATE_VARIABLE, Arrays.asList(symbol1, symbol2));
+            }
+        }
+        
+        // Cross-scope conflicts (Everywhere scope rules)
+        if (isInEverywhereScope(symbol1) && isInEverywhereScope(symbol2)) {
+            if (symbol1.getType() != symbol2.getType()) {
+                ConflictType type = determineConflictType(symbol1.getType(), symbol2.getType());
+                return new Conflict(type, Arrays.asList(symbol1, symbol2));
+            }
+        }
+        
+        return null;
+    }
+    
+    private boolean isInEverywhereScope(SymbolEntry symbol) {
+        return symbol.getScope() == ScopeType.GLOBAL ||
+               symbol.getScope() == ScopeType.FUNCTION_SCOPE ||
+               symbol.getScope() == ScopeType.PROCEDURE_SCOPE ||
+               symbol.getScope() == ScopeType.MAIN_SCOPE;
+    }
+    
+    private ConflictType determineConflictType(SymbolType type1, SymbolType type2) {
+        Set<SymbolType> types = new HashSet<>(Arrays.asList(type1, type2));
+        
+        if (types.contains(SymbolType.VARIABLE) && types.contains(SymbolType.FUNCTION)) {
+            return ConflictType.VARIABLE_FUNCTION;
+        } else if (types.contains(SymbolType.VARIABLE) && types.contains(SymbolType.PROCEDURE)) {
+            return ConflictType.VARIABLE_PROCEDURE;
+        } else if (types.contains(SymbolType.FUNCTION) && types.contains(SymbolType.PROCEDURE)) {
+            return ConflictType.FUNCTION_PROCEDURE;
+        }
+        
+        return ConflictType.UNKNOWN;
+    }
+}
+
+/**
+ * Conflict representation
+ */
+public class Conflict {
+    private ConflictType type;
+    private List<SymbolEntry> conflictingSymbols;
+    
+    public Conflict(ConflictType type, List<SymbolEntry> conflictingSymbols) {
+        this.type = type;
+        this.conflictingSymbols = new ArrayList<>(conflictingSymbols);
+    }
+    
+    public ConflictType getType() { return type; }
+    public List<SymbolEntry> getConflictingSymbols() { return conflictingSymbols; }
+}
+
+/**
+ * Conflict types enumeration
+ */
+public enum ConflictType {
+    DUPLICATE_VARIABLE,
+    VARIABLE_FUNCTION,
+    VARIABLE_PROCEDURE,
+    FUNCTION_PROCEDURE,
+    UNKNOWN
+}
+
+// ============= SECTION 8: ERROR MANAGEMENT SYSTEM =============
+
+/**
+ * Error Severity enumeration
+ */
+public enum ErrorSeverity {
+    ERROR,    // blocks compilation
+    WARNING,  // compilation continues
+    INFO      // informational only
+}
+
+/**
+ * Rule Types enumeration
+ */
+public enum RuleType {
+    VARIABLE_FUNCTION_CONFLICT,
+    VARIABLE_PROCEDURE_CONFLICT,
+    FUNCTION_PROCEDURE_CONFLICT,
+    DUPLICATE_VARIABLE_DECLARATION
+}
+
+/**
+ * Rule Violation Record
+ */
+public class RuleViolation {
+    private RuleType ruleType;
+    private List<SymbolEntry> conflictingSymbols;
+    private String errorMessage;
+    private ErrorSeverity severity;
+    private SourceLocation sourceLocation;
+    
+    public RuleViolation(RuleType ruleType, List<SymbolEntry> conflictingSymbols, 
+                        String errorMessage, ErrorSeverity severity, SourceLocation sourceLocation) {
+        this.ruleType = ruleType;
+        this.conflictingSymbols = new ArrayList<>(conflictingSymbols);
+        this.errorMessage = errorMessage;
+        this.severity = severity;
+        this.sourceLocation = sourceLocation;
+    }
+    
+    public String getDescription() {
+        return errorMessage;
+    }
+    
+    public ErrorSeverity getSeverity() {
+        return severity;
+    }
+    
+    public SourceLocation getLocation() {
+        return sourceLocation;
+    }
+    
+    public RuleType getRuleType() { return ruleType; }
+    public List<SymbolEntry> getConflictingSymbols() { return conflictingSymbols; }
+    public String getErrorMessage() { return errorMessage; }
+}
+
+/**
+ * Error Reporter - collects & manages violations
+ */
+public class ErrorReporter {
+    private List<RuleViolation> violations;
+    private int errorCount;
+    private int warningCount;
+    
+    public ErrorReporter() {
+        this.violations = new ArrayList<>();
+        this.errorCount = 0;
+        this.warningCount = 0;
+    }
+    
+    public void addViolation(RuleViolation violation) {
+        violations.add(violation);
+        
+        if (violation.getSeverity() == ErrorSeverity.ERROR) {
+            errorCount++;
+        } else if (violation.getSeverity() == ErrorSeverity.WARNING) {
+            warningCount++;
+        }
+    }
+    
+    public ErrorReport generateReport() {
+        return new ErrorReport(violations, errorCount, warningCount);
+    }
+    
+    public boolean hasErrors() {
+        return errorCount > 0;
+    }
+    
+    public int getErrorCount() {
+        return errorCount;
+    }
+    
+    public int getWarningCount() {
+        return warningCount;
+    }
+    
+    public void clearErrors() {
+        violations.clear();
+        errorCount = 0;
+        warningCount = 0;
+    }
+    
+    public List<RuleViolation> getViolations() {
+        return new ArrayList<>(violations);
+    }
+}
+
+/**
+ * Error Report container
+ */
+public class ErrorReport {
+    private List<RuleViolation> violations;
+    private int errorCount;
+    private int warningCount;
+    
+    public ErrorReport(List<RuleViolation> violations, int errorCount, int warningCount) {
+        this.violations = new ArrayList<>(violations);
+        this.errorCount = errorCount;
+        this.warningCount = warningCount;
+    }
+    
+    public List<RuleViolation> getViolations() { return violations; }
+    public int getErrorCount() { return errorCount; }
+    public int getWarningCount() { return warningCount; }
+    public boolean hasErrors() { return errorCount > 0; }
+}
+
+// ============= SECTION 9: ERROR MESSAGE GENERATION =============
+
+/**
+ * Error Message Templates
+ */
+public class MessageTemplates {
+    public static final String VARIABLE_FUNCTION_CONFLICT = 
+        "Variable '%s' conflicts with function '%s' in %s scope";
+    
+    public static final String VARIABLE_PROCEDURE_CONFLICT = 
+        "Variable '%s' conflicts with procedure '%s' in %s scope";
+    
+    public static final String FUNCTION_PROCEDURE_CONFLICT = 
+        "Function '%s' conflicts with procedure '%s' in %s scope";
+    
+    public static final String DUPLICATE_VARIABLE = 
+        "Variable '%s' declared multiple times in %s scope";
+}
+
+/**
+ * Error Formatter - Formats violations into readable messages
+ */
+public class ErrorFormatter {
+    
+    public String formatViolation(RuleViolation violation) {
+        StringBuilder sb = new StringBuilder();
+        
+        // add severity & location
+        sb.append(String.format("[%s] at %s: ", 
+                violation.getSeverity(), 
+                formatLocation(violation.getLocation())));
+        
+        // add message
+        sb.append(violation.getDescription());
+        
+        return sb.toString();
+    }
+    
+    public String formatSummary(List<RuleViolation> violations) {
+        StringBuilder sb = new StringBuilder();
+        
+        int errors = (int) violations.stream()
+            .filter(v -> v.getSeverity() == ErrorSeverity.ERROR)
+            .count();
+        
+        int warnings = (int) violations.stream()
+            .filter(v -> v.getSeverity() == ErrorSeverity.WARNING)
+            .count();
+        
+        sb.append(String.format("Semantic Analysis Summary: %d error(s), %d warning(s)\n", 
+                errors, warnings));
+        
+        if (violations.isEmpty()) {
+            sb.append("No semantic violations found.\n");
+        } else {
+            sb.append("\nViolations:\n");
+            for (RuleViolation violation : violations) {
+                sb.append("  ").append(formatViolation(violation)).append("\n");
+            }
+        }
+        
+        return sb.toString();
+    }
+    
+    public String formatLocation(SourceLocation location) {
+        if (location == null) {
+            return "unknown location";
+        }
+        
+        return String.format("%s:%d:%d", 
+                location.getFilename() != null ? location.getFilename() : "input",
+                location.getLine(),
+                location.getColumn());
+    }
+}
+
+// ============= SECTION 10: SUPPORTING DATA STRUCTURES =============
+
+/**
+ * Source Location - rep. position in src code
+ */
+public class SourceLocation implements Comparable<SourceLocation> {
+    private int line;
+    private int column;
+    private String filename;
+    
+    public SourceLocation(int line, int column, String filename) {
+        this.line = line;
+        this.column = column;
+        this.filename = filename;
+    }
+    
+    public SourceLocation(int line, int column) {
+        this(line, column, null);
+    }
+    
+    public int getLine() { return line; }
+    public int getColumn() { return column; }
+    public String getFilename() { return filename; }
+    
+    @Override
+    public String toString() {
+        return formatLocation();
+    }
+    
+    private String formatLocation() {
+        if (filename != null) {
+            return String.format("%s:%d:%d", filename, line, column);
+        } else {
+            return String.format("%d:%d", line, column);
+        }
+    }
+    
+    @Override
+    public int compareTo(SourceLocation other) {
+        if (this.filename != null && other.filename != null) {
+            int fileCompare = this.filename.compareTo(other.filename);
+            if (fileCompare != 0) return fileCompare;
+        }
+        
+        int lineCompare = Integer.compare(this.line, other.line);
+        if (lineCompare != 0) return lineCompare;
+        
+        return Integer.compare(this.column, other.column);
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof SourceLocation)) return false;
+        
+        SourceLocation other = (SourceLocation) obj;
+        return this.line == other.line && 
+               this.column == other.column &&
+               Objects.equals(this.filename, other.filename);
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(line, column, filename);
+    }
+}
+
+/**
+ * Configuration Manager - handles semantic checker configuration
+ */
+public class Configuration {
+    private boolean caseSensitive;
+    private boolean stopOnFirstError;
+    private int maxErrorCount;
+    private boolean verboseOutput;
+    private Map<String, Object> properties;
+    
+    public Configuration() {
+        // default values
+        this.caseSensitive = true;
+        this.stopOnFirstError = false;
+        this.maxErrorCount = 100;
+        this.verboseOutput = false;
+        this.properties = new HashMap<>();
+    }
+    
+    public void loadConfig(String file) {
+        // to be completed: implementation would load from properties file
+        // for now, use defaults
+    }
+    
+    public void setProperty(String key, Object value) {
+        properties.put(key, value);
+        
+        // update specific configuration fields
+        switch (key) {
+            case "caseSensitive":
+                this.caseSensitive = (Boolean) value;
+                break;
+            case "stopOnFirstError":
+                this.stopOnFirstError = (Boolean) value;
+                break;
+            case "maxErrorCount":
+                this.maxErrorCount = (Integer) value;
+                break;
+            case "verboseOutput":
+                this.verboseOutput = (Boolean) value;
+                break;
+        }
+    }
+    
+    public Object getProperty(String key) {
+        return properties.get(key);
+    }
+    
+    // getters
+    public boolean isCaseSensitive() { return caseSensitive; }
+    public boolean isStopOnFirstError() { return stopOnFirstError; }
+    public int getMaxErrorCount() { return maxErrorCount; }
+    public boolean isVerboseOutput() { return verboseOutput; }
+}
+
+/**
+ * String Utilities - helper methods for string operations
+ */
+public class StringUtils {
+    
+    public static String normalize(String name) {
+        if (name == null) return null;
+        return name.trim().toLowerCase();
+    }
+    
+    public static boolean compareNames(String name1, String name2) {
+        if (name1 == null && name2 == null) return true;
+        if (name1 == null || name2 == null) return false;
+        
+        // use configuration for case sensitivity
+        return name1.equals(name2);
+    }
+    
+    public static boolean isValidIdentifier(String name) {
+        if (name == null || name.isEmpty()) return false;
+        
+        // SPL identifier rules: [a-z][a-z]*[0-9]*
+        if (!Character.isLowerCase(name.charAt(0))) {
+            return false;
+        }
+        
+        boolean inLetterPhase = true;
+        for (int i = 1; i < name.length(); i++) {
+            char c = name.charAt(i);
+            
+            if (Character.isLowerCase(c)) {
+                if (!inLetterPhase) return false; // Letters after numbers not allowed
+            } else if (Character.isDigit(c)) {
+                inLetterPhase = false; // Switch to number phase
+            } else {
+                return false; // Invalid character
+            }
+        }
+        
+        return true;
+    }
+}
+
+/**
+ * Collection Utilities - helper methods for collection operations
+ */
+public class CollectionUtils {
+    
+    public static <T> List<T> findDuplicates(List<T> list) {
+        Set<T> seen = new HashSet<>();
+        List<T> duplicates = new ArrayList<>();
+        
+        for (T item : list) {
+            if (!seen.add(item)) {
+                if (!duplicates.contains(item)) {
+                    duplicates.add(item);
+                }
+            }
+        }
+        
+        return duplicates;
+    }
+    
+    public static <T, K> Map<K, List<T>> groupBy(List<T> list, java.util.function.Function<T, K> keyExtractor) {
+        Map<K, List<T>> groups = new HashMap<>();
+        
+        for (T item : list) {
+            K key = keyExtractor.apply(item);
+            groups.computeIfAbsent(key, k -> new ArrayList<>()).add(item);
+        }
+        
+        return groups;
+    }
+    
+    public static <T> Set<T> intersection(Set<T> set1, Set<T> set2) {
+        Set<T> result = new HashSet<>(set1);
+        result.retainAll(set2);
+        return result;
+    }
+}
