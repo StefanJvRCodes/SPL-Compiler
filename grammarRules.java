@@ -65,6 +65,7 @@ public class grammarRules {
         }
     }
 
+
     public static void proc(TokenFeeder tf) {
         try {
             String currToken = tf.next();
@@ -90,6 +91,7 @@ public class grammarRules {
             System.out.println("Syntax error: " + e.getMessage());
         }
     }
+
 
     public static void func(TokenFeeder tf) {
         try {
@@ -117,6 +119,7 @@ public class grammarRules {
         }
     }
 
+
     public static void mainSPL(TokenFeeder tf) {
         try {
             String currToken = tf.next();
@@ -142,6 +145,7 @@ public class grammarRules {
             System.out.println("Syntax error: " + e.getMessage());
         }
     }
+
 
     public static void SPL_PROG(TokenFeeder tf) {
         try {
@@ -173,7 +177,6 @@ public class grammarRules {
             mainSPL(tf);
 
 
-            
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
             System.exit(1);
@@ -182,9 +185,18 @@ public class grammarRules {
     }
 
 
-    
     public static void VARIABLES(TokenFeeder tf) {
         try {
+            String currToken = tf.next();
+            if (currToken == null) {
+                return;
+            }
+            if ("VAR".equals(currToken)) {
+                VAR(tf);
+                VARIABLES(tf);
+            } else {
+                throw new Exception("Expected user defined name or end of variables, found: " + currToken);
+            }
             
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
@@ -195,6 +207,13 @@ public class grammarRules {
 
     public static void VAR(TokenFeeder tf) {
         try {
+            String currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"VAR".equals(currToken)) {
+                throw new Exception("Expected user defined name, found: " + currToken);
+            }
             
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
@@ -205,6 +224,13 @@ public class grammarRules {
 
     public static void NAME(TokenFeeder tf) {
         try {
+            String currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"NAME".equals(currToken)) {
+                throw new Exception("Expected user defined name, found: " + currToken);
+            }
             
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
@@ -215,16 +241,53 @@ public class grammarRules {
 
     public static void PROCDEFS(TokenFeeder tf) {
         try {
-            
+            String currToken = tf.next();
+            if (currToken == null) {
+                return;
+            }
+            tf.prepend(currToken);
+            PDEF(tf);
+            PROCDEFS(tf);
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
         }
     }
-
 
 
     public static void PDEF(TokenFeeder tf) {
         try {
+            NAME(tf);
+            String currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"(".equals(currToken)) {
+                throw new Exception("Expected '(', found: " + currToken);
+            }
+            PARAM(tf);
+            currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!")".equals(currToken)) {
+                throw new Exception("Expected ')', found: " + currToken);
+            }
+            currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"{".equals(currToken)) {
+                throw new Exception("Expected '{', found: " + currToken);
+            }
+            BODY(tf);
+            currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"}".equals(currToken)) {
+                throw new Exception("Expected '}', found: " + currToken);
+            }
+
             
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
@@ -233,29 +296,105 @@ public class grammarRules {
 
 
 
+   
     public static void FDEF(TokenFeeder tf) {
         try {
-            
+            NAME(tf);
+            String currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"(".equals(currToken)) {
+                throw new Exception("Expected '(', found: " + currToken);
+            }
+            PARAM(tf);
+            currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!")".equals(currToken)) {
+                throw new Exception("Expected ')', found: " + currToken);
+            }
+            currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"{".equals(currToken)) {
+                throw new Exception("Expected '{', found: " + currToken);
+            }
+            BODY(tf);
+            currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!";".equals(currToken)) {
+                throw new Exception("Expected '}', found: " + currToken);
+            }
+            currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"return".equals(currToken)) {
+                throw new Exception("Expected 'return', found: " + currToken);
+            }
+            ATOM(tf);
+            currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"}".equals(currToken)) {
+                throw new Exception("Expected '}', found: " + currToken);
+            }
+
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
         }
     }
-
 
 
     public static void FUNCDEFS(TokenFeeder tf) {
         try {
-            
+            String currToken = tf.next();
+            if (currToken == null) {
+                return;
+            }
+            tf.prepend(currToken);
+            FDEF(tf);
+            FUNCDEFS(tf);
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
+            
         }
     }
 
 
-
+    
     public static void BODY(TokenFeeder tf) {
         try {
-            
+            String currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"local".equals(currToken)) {
+                throw new Exception("Expected 'local', found: " + currToken);
+            }
+            currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"{".equals(currToken)) {
+                throw new Exception("Expected '{', found: " + currToken);
+            }
+            MAXTHREE(tf);
+            currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"}".equals(currToken)) {
+                throw new Exception("Expected '}', found: " + currToken);
+            }
+            ALGO(tf);
+
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
         }
@@ -265,16 +404,27 @@ public class grammarRules {
 
     public static void PARAM(TokenFeeder tf) {
         try {
-            
+            MAXTHREE(tf);
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
         }
     }
 
 
-
+    //MAXTHREE := //nullable
+    //MAXTHREE := VAR
+    //MAXTHREE := VAR VAR
+    //MAXTHREE := VAR VAR VAR
     public static void MAXTHREE(TokenFeeder tf) {
         try {
+            String currToken = tf.next();
+            if (currToken == null) {
+                return;
+            }
+            tf.prepend(currToken);
+            VAR(tf);
+
+            //TODO, figure out the three vars thing
             
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
