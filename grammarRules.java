@@ -39,107 +39,373 @@ public class grammarRules {
 
     
     
+    public static void glob(TokenFeeder tf) {
+        try {
+            String currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"{".equals(currToken)) {
+                throw new Exception("Expected '{', found: " + currToken);
+            }
 
 
-    public static void SPL_PROG(){}
+            VARIABLES(tf);
+
+
+            currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"}".equals(currToken)) {
+                throw new Exception("Expected '}', found: " + currToken);
+            }
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+    public static void proc(TokenFeeder tf) {
+        try {
+            String currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"{".equals(currToken)) {
+                throw new Exception("Expected '{', found: " + currToken);
+            }
+
+
+            PROCDEFS(tf);
+
+
+            currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"}".equals(currToken)) {
+                throw new Exception("Expected '}', found: " + currToken);
+            }
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+    public static void func(TokenFeeder tf) {
+        try {
+            String currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"{".equals(currToken)) {
+                throw new Exception("Expected '{', found: " + currToken);
+            }
+
+
+            FUNCDEFS(tf);
+
+
+            currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"}".equals(currToken)) {
+                throw new Exception("Expected '}', found: " + currToken);
+            }
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+    public static void mainSPL(TokenFeeder tf) {
+        try {
+            String currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"{".equals(currToken)) {
+                throw new Exception("Expected '{', found: " + currToken);
+            }
+
+
+            MAINPROG(tf);
+
+
+            currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"}".equals(currToken)) {
+                throw new Exception("Expected '}', found: " + currToken);
+            }
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+    public static void SPL_PROG(TokenFeeder tf) {
+        try {
+            String currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"glob".equals(currToken)) {
+                throw new Exception("Expected 'glob', found: " + currToken);
+            }
+            glob(tf);
+
+
+            if (!"proc".equals(currToken)) {
+                throw new Exception("Expected 'proc', found: " + currToken);
+            }
+            proc(tf);
+
+
+            if (!"func".equals(currToken)) {
+                throw new Exception("Expected 'func', found: " + currToken);
+            }
+            func(tf);
+
+
+            if (!"main".equals(currToken)) {
+                throw new Exception("Expected 'main', found: " + currToken);
+            }
+            mainSPL(tf);
+
+
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+            System.exit(1);
+        }
+
+    }
 
 
     
-    public static void VARIABLES() {}
-
-
-
-    public static void VAR() {}
-
-
-
-    public static void NAME() {}
-
-
-
-    public static void PROCDEFS() {}
-
-
-
-    public static void PDEF() {}
-
-
-
-    public static void FDEF() {}
-
-
-
-    public static void FUNCDEFS() {}
-
-
-
-    public static void BODY() {}
-
-
-
-    public static void PARAM() {}
-
-
-
-    public static void MAXTHREE() {}
-
-
-
-    public static void MAINPROG() {}
-
-
-
-    public static void ATOM() {}
-
-
-
-    public static void ALGO() {}
-
-
-
-    public static void INSTR() {}
-
-
-
-    public static void ASSIGN() {}
-
-
-
-    public static void LOOP() {}
-
-
-
-    public static void BRANCH() {}
-
-
-
-    public static void OUTPUT() {}
-
-
-
-    public static void INPUT() {}
-
-
-
-    public static void TERM() {}
-
-
-
-    public static void UNOP(String str) {
-        if (str.equals("neg") || str.equals("not")) {
-            // valid unary operator
-        } else {
-            throw new IllegalArgumentException("Invalid unary operator: " + str);
+    public static void VARIABLES(TokenFeeder tf) {
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
         }
     }
 
 
 
-    public static void BINOP(String str) {
-        if (str.equals("eq") || str.equals(">") || str.equals("or") || str.equals("and") || str.equals("plus") || str.equals("minus") || str.equals("mult") || str.equals("div")) {
+    public static void VAR(TokenFeeder tf) {
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+
+
+    public static void NAME(TokenFeeder tf) {
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+
+
+    public static void PROCDEFS(TokenFeeder tf) {
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+
+
+    public static void PDEF(TokenFeeder tf) {
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+
+
+    public static void FDEF(TokenFeeder tf) {
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+
+
+    public static void FUNCDEFS(TokenFeeder tf) {
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+
+
+    public static void BODY(TokenFeeder tf) {
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+
+
+    public static void PARAM(TokenFeeder tf) {
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+
+
+    public static void MAXTHREE(TokenFeeder tf) {
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+
+
+    public static void MAINPROG(TokenFeeder tf) {
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+
+
+    public static void ATOM(TokenFeeder tf) {
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+
+
+    public static void ALGO(TokenFeeder tf) {
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+
+
+    public static void INSTR(TokenFeeder tf) {
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+
+
+    public static void ASSIGN(TokenFeeder tf) {
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+
+
+    public static void LOOP(TokenFeeder tf) {
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+
+
+    public static void BRANCH(TokenFeeder tf) {
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+
+
+    public static void OUTPUT(TokenFeeder tf) {
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+
+
+    public static void INPUT(TokenFeeder tf) {
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+
+
+    public static void TERM(TokenFeeder tf) {
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+
+
+    public static void UNOP(TokenFeeder tf) {
+        String currToken = tf.next();
+        if (currToken.equals("neg") || currToken.equals("not")) {
+            // valid unary operator
+        } else {
+            throw new IllegalArgumentException("Invalid unary operator: " + str);
+        }
+
+        try {
+            
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+        }
+    }
+
+
+
+    public static void BINOP(TokenFeeder tf) {
+        String currToken = tf.next();
+        if (currToken.equals("eq") || currToken.equals(">") || currToken.equals("or") || currToken.equals("and") || currToken.equals("plus") || currToken.equals("minus") || currToken.equals("mult") || currToken.equals("div")) {
             // valid binary operator
         } else {
-            throw new IllegalArgumentException("Invalid binary operator: " + str);
+            throw new IllegalArgumentException("Invalid binary operator: " + currToken);
         }
     }
 }
