@@ -1,5 +1,6 @@
 import java.util.HashMap;
 import java.util.Map;
+import java.lang.Integer;
 
 public class grammarRules {
     public static final Map<String, String> keywords = new HashMap<>();
@@ -435,7 +436,7 @@ public class grammarRules {
 
     public static void MAINPROG(TokenFeeder tf) {
         try {
-            
+            //TODO
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
         }
@@ -445,6 +446,16 @@ public class grammarRules {
 
     public static void ATOM(TokenFeeder tf) {
         try {
+            String currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (isNumeric(currToken)){
+                return;
+            }
+            tf.prepend(currToken);
+            VAR(tf);
+
             
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
@@ -452,9 +463,18 @@ public class grammarRules {
     }
 
 
-
     public static void ALGO(TokenFeeder tf) {
         try {
+            INSTR(tf);
+            String currToken = tf.next();
+            if (currToken == null) {
+                tf.prepend(currToken);
+                return;
+            }
+            if (!";".equals(currToken)) {
+                ALGO(tf);
+            }
+
             
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
@@ -465,6 +485,17 @@ public class grammarRules {
 
     public static void INSTR(TokenFeeder tf) {
         try {
+            String currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if ("halt".equals(currToken)) {
+                return;
+            } else if ("print".equals(currToken)) {
+                OUTPUT(tf);
+            }
+            tf.prepend(currToken);
+            //TODO figure out INSTR
             
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
@@ -482,9 +513,56 @@ public class grammarRules {
     }
 
 
-
     public static void LOOP(TokenFeeder tf) {
         try {
+            String currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if ("while".equals(currToken)) {
+                TERM(tf);
+                currToken = tf.next();
+                if (currToken == null) {
+                    throw new Exception("Unexpected end of input");
+                }
+                if (!"{".equals(currToken)) {
+                    throw new Exception("Expected '{', found: " + currToken);
+                }
+                ALGO(tf);
+                currToken = tf.next();
+                if (currToken == null) {
+                    throw new Exception("Unexpected end of input");
+                }
+                if (!"}".equals(currToken)) {
+                    throw new Exception("Expected '}', found: " + currToken);
+                }
+            } else if ("do".equals(currToken)) {
+                currToken = tf.next();
+                if (currToken == null) {
+                    throw new Exception("Unexpected end of input");
+                }
+                if (!"{".equals(currToken)) {
+                    throw new Exception("Expected '{', found: " + currToken);
+                }
+                ALGO(tf);
+                currToken = tf.next();
+                if (currToken == null) {
+                    throw new Exception("Unexpected end of input");
+                }
+                if (!"}".equals(currToken)) {
+                    throw new Exception("Expected '}', found: " + currToken);
+                }
+                currToken = tf.next();
+                if (currToken == null) {
+                    throw new Exception("Unexpected end of input");
+                }
+                if (!"until".equals(currToken)) {
+                    throw new Exception("Expected 'until', found: " + currToken);
+                }
+                TERM(tf);
+            } else {
+                throw new Exception("Expected 'while' or 'do', found: " + currToken);
+            }
             
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
@@ -492,9 +570,52 @@ public class grammarRules {
     }
 
 
-
     public static void BRANCH(TokenFeeder tf) {
         try {
+            String currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"if".equals(currToken)) {
+                throw new Exception("Expected 'if', found: " + currToken);
+            }
+            TERM(tf);
+            currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"{".equals(currToken)) {
+                throw new Exception("Expected '{', found: " + currToken);
+            }
+            ALGO(tf);
+            currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"}".equals(currToken)) {
+                throw new Exception("Expected '}', found: " + currToken);
+            }
+
+            currToken = tf.next();
+            if (currToken != null && "else".equals(currToken)) {
+                currToken = tf.next();
+                if (currToken == null) {
+                    throw new Exception("Unexpected end of input");
+                }
+                if (!"{".equals(currToken)) {
+                    throw new Exception("Expected '{', found: " + currToken);
+                }
+                ALGO(tf);
+                currToken = tf.next();
+                if (currToken == null) {
+                    throw new Exception("Unexpected end of input");
+                }
+                if (!"}".equals(currToken)) {
+                    throw new Exception("Expected '}', found: " + currToken);
+                }
+            } else {
+                tf.prepend(currToken);
+            }
             
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
@@ -556,6 +677,15 @@ public class grammarRules {
             // valid binary operator
         } else {
             throw new IllegalArgumentException("Invalid binary operator: " + currToken);
+        }
+    }
+
+    private static boolean isNumeric(String str) {
+        try {
+            Double.parseDouble(str);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
         }
     }
 }
