@@ -1,7 +1,8 @@
 import java.util.HashMap;
 import java.util.Map;
 import java.lang.Integer;
-
+import java.util.regex.Pattern;
+//solution to choosing between 2 non-terminals: Look ahead as many times as you need. Current implementation only looks ahead once.
 public class grammarRules {
     public static final Map<String, String> keywords = new HashMap<>();
 
@@ -205,15 +206,15 @@ public class grammarRules {
     }
 
 
-
     public static void VAR(TokenFeeder tf) {
         try {
             String currToken = tf.next();
             if (currToken == null) {
                 throw new Exception("Unexpected end of input");
             }
-            if (!"VAR".equals(currToken)) {
-                throw new Exception("Expected user defined name, found: " + currToken);
+            if (!isLegal(currToken)) {
+                tf.prepend(currToken);
+                throw new Exception("Not a valid variable" + currToken);
             }
             
         } catch (Exception e) {
@@ -412,20 +413,31 @@ public class grammarRules {
     }
 
 
-    //MAXTHREE := //nullable
-    //MAXTHREE := VAR
-    //MAXTHREE := VAR VAR
-    //MAXTHREE := VAR VAR VAR
+
     public static void MAXTHREE(TokenFeeder tf) {
         try {
             String currToken = tf.next();
             if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+
+
+            if (currToken.equals(")")) {
+                tf.prepend(currToken);
                 return;
             }
-            tf.prepend(currToken);
+
             VAR(tf);
 
-            //TODO, figure out the three vars thing
+            try {
+                VAR(tf);
+            } catch (Exception e) {
+                return;
+            }
+
+            try {
+                VAR(tf);
+            } catch (Exception e) {}
             
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
@@ -433,10 +445,31 @@ public class grammarRules {
     }
 
 
-
     public static void MAINPROG(TokenFeeder tf) {
         try {
-            //TODO
+            String currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"var".equals(currToken)) {
+                throw new Exception("Expected 'var', found: " + currToken);
+            }
+            currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"{".equals(currToken)) {
+                throw new Exception("Expected '{', found: " + currToken);
+            }
+            VARIABLES(tf);
+            currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"}".equals(currToken)) {
+                throw new Exception("Expected '}', found: " + currToken);
+            }
+            ALGO(tf);
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
         }
@@ -687,5 +720,26 @@ public class grammarRules {
         } catch (NumberFormatException e) {
             return false;
         }
+    }
+
+
+    private static boolean isKeyword(String str) {
+        return keywords.containsKey(str);
+    }
+
+    // [a...z]{a...z}*{0...9}*
+    private  static boolean isLegal(String str) {
+        String regex = "^[a-z][a-z]*[0-9]*$";
+        Pattern pattern = Pattern.compile(regex);
+
+        if (!pattern.matcher(str).matches()) {
+            return false;
+        }
+
+        if (isKeyword(str)) {
+            return false;
+        }
+        
+        return true;
     }
 }

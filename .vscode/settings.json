@@ -3,7 +3,9 @@
         "BINOP",
         "FDEF",
         "FUNCDEFS",
+        "MAINPROG",
         "MAXTHREE",
+        "mult",
         "PDEF",
         "PROCDEFS",
         "UNOP"
