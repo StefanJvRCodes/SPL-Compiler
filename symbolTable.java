@@ -1,8 +1,8 @@
 import java.util.*;
 
-class SymbolTable  {
+public class SymbolTable {
 
-     private HashMap<String, HashMap<String, SymbolTableEntry>> scopes;
+    private HashMap<String, HashMap<String, SymbolTableEntry>> scopes;
     private Stack<String> scopeStack;
     
     public SymbolTable() {
@@ -12,11 +12,9 @@ class SymbolTable  {
         scopeStack.push("Everywhere");
     }
 
-
-
-     // Enter a new scope.
-     // Call this when entering Global, Procedure, Function, Main, or Local scopes.
-      public void enterScope(String scopeName) {
+    // Enter a new scope.
+    // Call this when entering Global, Procedure, Function, Main, or Local scopes.
+    public void enterScope(String scopeName) {
         if (!scopes.containsKey(scopeName)) {
             scopes.put(scopeName, new HashMap<>());
         }
@@ -24,19 +22,18 @@ class SymbolTable  {
     }
 
     //exit scope
-     public void exitScope() {
+    public void exitScope() {
         if (scopeStack.size() > 1) {
             scopeStack.pop();
         }
     }
 
     //get current scope name
-     public String getCurrentScope() {
+    public String getCurrentScope() {
         return scopeStack.peek();
     }
 
-
-public boolean insert(String name, SymbolKinds kind, int nodeId) {
+    public boolean insert(String name, SymbolKinds kind, int nodeId) {
         String currentScope = getCurrentScope();
         HashMap<String, SymbolTableEntry> currentScopeTable = scopes.get(currentScope);
         
@@ -65,7 +62,7 @@ public boolean insert(String name, SymbolKinds kind, int nodeId) {
         return null;
     }
        
- public SymbolTableEntry lookupInScope(String name, String scopeName) {
+    public SymbolTableEntry lookupInScope(String name, String scopeName) {
         HashMap<String, SymbolTableEntry> scopeTable = scopes.get(scopeName);
         if (scopeTable == null) {
             return null;
@@ -73,17 +70,17 @@ public boolean insert(String name, SymbolKinds kind, int nodeId) {
         return scopeTable.get(name);
     }
 
-  public HashMap<String, SymbolTableEntry> getScopeEntries(String scopeName) {
+    public HashMap<String, SymbolTableEntry> getScopeEntries(String scopeName) {
         return scopes.getOrDefault(scopeName, new HashMap<>());
     }
 
- public boolean existsInCurrentScope(String name) {
+    public boolean existsInCurrentScope(String name) {
         String currentScope = getCurrentScope();
         HashMap<String, SymbolTableEntry> scopeTable = scopes.get(currentScope);
         return scopeTable.containsKey(name);
     }
 
-      public void print() {
+    public void print() {
         System.out.println("\n" + "=".repeat(70));
         System.out.println("                    SYMBOL TABLE");
         System.out.println("=".repeat(70));
@@ -105,8 +102,4 @@ public boolean insert(String name, SymbolKinds kind, int nodeId) {
         }
         System.out.println("=".repeat(70) + "\n");
     }
-
-
-
 }
-

@@ -1,4 +1,0 @@
-glob {VARIABLES}
-proc {PROCDEFS}
-func {FUNCDEFS}
-main {MAINPROG}
