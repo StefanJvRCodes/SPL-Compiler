@@ -2,6 +2,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.lang.Integer;
 import java.util.regex.Pattern;
+import javax.lang.model.util.AbstractAnnotationValueVisitor8;
 //solution to choosing between 2 non-terminals: Look ahead as many times as you need. Current implementation only looks ahead once.
 public class grammarRules {
     public static final Map<String, String> keywords = new HashMap<>();
@@ -517,6 +518,8 @@ public class grammarRules {
 
 
     public static void INSTR(TokenFeeder tf) {
+        String temp = tf.next();
+        tf.prepend(temp);
         try {
             String currToken = tf.next();
             if (currToken == null) {
@@ -526,9 +529,41 @@ public class grammarRules {
                 return;
             } else if ("print".equals(currToken)) {
                 OUTPUT(tf);
+                return;
             }
             tf.prepend(currToken);
-            //TODO figure out INSTR
+            try {   
+                NAME(tf);
+                currToken = tf.next();
+                if (currToken == null) {
+                    throw new Exception("Unexpected end of input");
+                }
+                if (!"(".equals(currToken)) {
+                    throw new Exception("Expected '(', found: " + currToken);
+                }
+                INPUT(tf);
+                currToken = tf.next();
+                if (currToken == null) {
+                    throw new Exception("Unexpected end of input");
+                }
+                if (!")".equals(currToken)) {
+                    throw new Exception("Expected ')', found: " + currToken);
+                }
+            } catch (Exception e) {
+                try {
+                    ASSIGN(tf);
+                } catch (Exception f) {
+                    try {
+                        LOOP(tf);
+                    } catch (Exception g) {
+                        try {
+                            BRANCH(tf);
+                        } catch (Exception h) {
+                            throw new Exception("Expected INSTR, found: " + currToken);
+                        }
+                    }
+                }
+            }
             
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
@@ -659,6 +694,16 @@ public class grammarRules {
 
     public static void OUTPUT(TokenFeeder tf) {
         try {
+            String temp = tf.next();
+            tf.prepend(temp);
+            try {
+                ATOM(tf);
+                return;
+            } catch (Exception f) {
+                tf.prepend(temp);
+                //try string
+
+            }
             
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
@@ -740,6 +785,11 @@ public class grammarRules {
             return false;
         }
         
+        return true;
+    }
+
+
+    private static boolean validString(String str) {
         return true;
     }
 }
