@@ -1,3 +1,6 @@
+//Angie updated this file for types (SPL_Types)
+
+// ASTNode.java
 import java.util.*;
 
 public class ASTNode {
@@ -8,6 +11,7 @@ public class ASTNode {
     private String value;
     private final List<ASTNode> children;
     private ASTNode parent;
+    private String type; 
     
     public ASTNode(String nodeType) {
         this.nodeId = ++nodeCounter;
@@ -15,6 +19,8 @@ public class ASTNode {
         this.children = new ArrayList<>();
         this.parent = null;
         this.value = null;
+        this.type = null;  //added for SPL_Types 
+    }
     }
     
     public ASTNode(String nodeType, String value) {
@@ -23,6 +29,7 @@ public class ASTNode {
         this.value = value;
         this.children = new ArrayList<>();
         this.parent = null;
+        this.type = null;  //added for SPL_Types
     }
     
     public int getNodeId() {
@@ -39,6 +46,15 @@ public class ASTNode {
     
     public void setValue(String value) {
         this.value = value;
+    }
+    
+    // Added getter & setter for type (SPL_Types)
+    public String getType() {
+        return type;
+    }
+    
+    public void setType(String type) {
+        this.type = type;
     }
     
     public List<ASTNode> getChildren() {
@@ -60,7 +76,7 @@ public class ASTNode {
         }
     }
     
-    // Find the scope this node belongs to
+    // Find scope this node belongs to
     public String findScope() {
         ASTNode current = this;
         while (current != null) {
@@ -103,9 +119,17 @@ public class ASTNode {
     @Override
     public String toString() {
         if (value != null) {
-            return String.format("%s[%d]: %s", nodeType, nodeId, value);
+            if (type != null) {
+                return String.format("%s[%d]: %s (%s)", nodeType, nodeId, value, type);
+            } else {
+                return String.format("%s[%d]: %s", nodeType, nodeId, value);
+            }
         } else {
-            return String.format("%s[%d]", nodeType, nodeId);
+            if (type != null) {
+                return String.format("%s[%d] (%s)", nodeType, nodeId, type);
+            } else {
+                return String.format("%s[%d]", nodeType, nodeId);
+            }
         }
     }
     
@@ -117,3 +141,4 @@ public class ASTNode {
         }
     }
 }
+
