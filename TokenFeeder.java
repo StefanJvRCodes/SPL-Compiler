@@ -6,6 +6,8 @@
 
 
 import java.util.Vector;
+import java.io.*;
+import java.util.*;
 
 public class TokenFeeder {
     private Vector<String> tokens;
@@ -14,6 +16,20 @@ public class TokenFeeder {
         tokens = new Vector<String>();
         for (String token : initTokens) {
             tokens.add(token);
+        }
+    }
+    
+    public TokenFeeder(String filename) {
+        tokens = new Vector<String>();
+        try {
+            Scanner scanner = new Scanner(new File(filename));
+            while (scanner.hasNext()) {
+                tokens.add(scanner.next());
+            }
+            scanner.close();
+        } catch (FileNotFoundException e) {
+            System.err.println("Error: Cannot read file " + filename);
+            System.exit(1);
         }
     }
 

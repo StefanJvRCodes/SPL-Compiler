@@ -1,8 +1,6 @@
 import java.util.HashMap;
 import java.util.Map;
-import java.lang.Integer;
 import java.util.regex.Pattern;
-import javax.lang.model.util.AbstractAnnotationValueVisitor8;
 //solution to choosing between 2 non-terminals: Look ahead as many times as you need. Current implementation only looks ahead once.
 public class grammarRules {
     public static final Map<String, String> keywords = new HashMap<>();
@@ -208,17 +206,18 @@ public class grammarRules {
 
 
     public static void VAR(TokenFeeder tf) {
+        String currToken = tf.next();
         try {
-            String currToken = tf.next();
+            
             if (currToken == null) {
                 throw new Exception("Unexpected end of input");
             }
             if (!isLegal(currToken)) {
-                tf.prepend(currToken);
                 throw new Exception("Not a valid variable" + currToken);
             }
             
         } catch (Exception e) {
+            tf.prepend(currToken);
             System.out.println("Syntax error: " + e.getMessage());
         }
     }
@@ -571,9 +570,36 @@ public class grammarRules {
     }
 
 
-
     public static void ASSIGN(TokenFeeder tf) {
         try {
+            VAR(tf);
+            String currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if (!"=".equals(currToken)) {
+                throw new Exception("Expected '=', found: " + currToken);
+            }
+            try {
+                TERM(tf);
+            } catch (Exception e) {
+                NAME(tf);
+                currToken = tf.next();
+                if (currToken == null) {
+                    throw new Exception("Unexpected end of input");
+                }
+                if (!"(".equals(currToken)) {
+                    throw new Exception("Expected '(', found: " + currToken);
+                }
+                INPUT(tf);
+                currToken = tf.next();
+                if (currToken == null) {
+                    throw new Exception("Unexpected end of input");
+                }
+                if (!")".equals(currToken)) {
+                    throw new Exception("Expected ')', found: " + currToken);
+                }
+            }
             
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
@@ -698,11 +724,14 @@ public class grammarRules {
             tf.prepend(temp);
             try {
                 ATOM(tf);
-                return;
             } catch (Exception f) {
-                tf.prepend(temp);
-                //try string
-
+                String currToken = tf.next();
+                if (currToken == null) {
+                    throw new Exception("Unexpected end of input");
+                }
+                if (!validString(currToken)) {
+                    throw new Exception("Expected string, found: " + currToken);
+                }
             }
             
         } catch (Exception e) {
@@ -714,6 +743,28 @@ public class grammarRules {
 
     public static void INPUT(TokenFeeder tf) {
         try {
+            String currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+
+
+            if (currToken.equals(")")) {
+                tf.prepend(currToken);
+                return;
+            }
+
+            ATOM(tf);
+
+            try {
+                ATOM(tf);
+            } catch (Exception e) {
+                return;
+            }
+
+            try {
+                ATOM(tf);
+            } catch (Exception e) {}
             
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
@@ -721,12 +772,31 @@ public class grammarRules {
     }
 
 
-
+    
     public static void TERM(TokenFeeder tf) {
+        String currToken = tf.next();
         try {
+            
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            if ("(".equals(currToken)) {
+                try {
+                    UNOP(tf);
+                    TERM(tf);
+                } catch (Exception e) {
+                    TERM(tf);
+                    BINOP(tf);
+                    TERM(tf);
+                }
+            } else {
+                tf.prepend(currToken);
+                ATOM(tf);
+            }
             
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
+            tf.prepend(currToken);
         }
     }
 
@@ -737,7 +807,8 @@ public class grammarRules {
         if (currToken.equals("neg") || currToken.equals("not")) {
             // valid unary operator
         } else {
-            throw new IllegalArgumentException("Invalid unary operator: " + str);
+            tf.prepend(currToken);
+            throw new IllegalArgumentException("Invalid unary operator: " + currToken);
         }
 
         try {
@@ -754,6 +825,7 @@ public class grammarRules {
         if (currToken.equals("eq") || currToken.equals(">") || currToken.equals("or") || currToken.equals("and") || currToken.equals("plus") || currToken.equals("minus") || currToken.equals("mult") || currToken.equals("div")) {
             // valid binary operator
         } else {
+            tf.prepend(currToken);
             throw new IllegalArgumentException("Invalid binary operator: " + currToken);
         }
     }
