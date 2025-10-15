@@ -1,3 +1,4 @@
+//updated print() for types (SPL_Types)
 import java.util.*;
 
 public class SymbolTable {
@@ -21,7 +22,6 @@ public class SymbolTable {
         scopeStack.push(scopeName);
     }
 
-    //exit scope
     public void exitScope() {
         if (scopeStack.size() > 1) {
             scopeStack.pop();
@@ -80,26 +80,26 @@ public class SymbolTable {
         return scopeTable.containsKey(name);
     }
 
-    public void print() {
-        System.out.println("\n" + "=".repeat(70));
-        System.out.println("                    SYMBOL TABLE");
-        System.out.println("=".repeat(70));
+public void print() {
+    System.out.println("\n" + "=".repeat(80));
+    System.out.println("                    SYMBOL TABLE");
+    System.out.println("=".repeat(80));
+    
+    for (String scopeName : scopes.keySet()) {
+        HashMap<String, SymbolTableEntry> scopeTable = scopes.get(scopeName);
         
-        for (String scopeName : scopes.keySet()) {
-            HashMap<String, SymbolTableEntry> scopeTable = scopes.get(scopeName);
+        if (!scopeTable.isEmpty()) {
+            System.out.println("\nScope: " + scopeName);
+            System.out.println("-".repeat(80));
+            System.out.printf("%-15s | %-12s | %-20s | %-10s | %s%n", 
+                "Name", "Kind", "Scope", "Type", "Node ID");
+            System.out.println("-".repeat(80));
             
-            if (!scopeTable.isEmpty()) {
-                System.out.println("\nScope: " + scopeName);
-                System.out.println("-".repeat(70));
-                System.out.printf("%-15s | %-12s | %-20s | %s%n", 
-                    "Name", "Kind", "Scope", "Node ID");
-                System.out.println("-".repeat(70));
-                
-                for (SymbolTableEntry entry : scopeTable.values()) {
-                    System.out.println(entry);
-                }
+            for (SymbolTableEntry entry : scopeTable.values()) {
+                System.out.println(entry);
             }
         }
-        System.out.println("=".repeat(70) + "\n");
     }
+    System.out.println("=".repeat(80) + "\n");
+}
 }
