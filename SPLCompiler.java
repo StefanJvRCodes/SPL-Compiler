@@ -19,7 +19,7 @@ public class SPLCompiler {
             
             // Parse and build AST
             System.out.println("\n[1] PARSING PHASE...");
-            ASTNode ast = ASTParser.parseSPL_PROG(tokenFeeder);
+            ASTNode ast = SPLParser.parseSPL_PROG(tokenFeeder);
             
             if (ast == null) {
                 System.out.println("✗ Parsing failed!");

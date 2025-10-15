@@ -110,6 +110,29 @@ public class SemanticAnalyzer {
             case "VAR":
                 analyzeVar(node);
                 break;
+            case "PROC_CALL":
+                analyzeProcCall(node);
+                break;
+            case "FUNC_CALL":
+                analyzeFuncCall(node);
+                break;
+            case "STRING":
+                // String literals don't need semantic analysis
+                break;
+            case "INPUT":
+            case "OUTPUT":
+            case "UNOP_EXPR":
+            case "BINOP_EXPR":
+            case "PRINT":
+            case "HALT":
+            case "WHILE":
+            case "DO":
+            case "IF":
+                // These nodes just need their children analyzed
+                for (ASTNode child : node.getChildren()) {
+                    analyzeNode(child);
+                }
+                break;
             default:
                 // For other node types, just continue traversal
                 for (ASTNode child : node.getChildren()) {
@@ -483,6 +506,40 @@ public class SemanticAnalyzer {
         }
     }
     
+    private void analyzeProcCall(ASTNode node) {
+        // Check if procedure exists
+        ASTNode nameNode = findFirstChild(node, "NAME");
+        if (nameNode != null && nameNode.getValue() != null) {
+            String procName = nameNode.getValue();
+            SymbolTableEntry procEntry = symbolTable.lookupInScope(procName, "Procedure");
+            if (procEntry == null) {
+                errors.add("Undeclared procedure: '" + procName + "' at node " + node.getNodeId());
+            }
+        }
+        
+        // Analyze children (INPUT parameters)
+        for (ASTNode child : node.getChildren()) {
+            analyzeNode(child);
+        }
+    }
+    
+    private void analyzeFuncCall(ASTNode node) {
+        // Check if function exists
+        ASTNode nameNode = findFirstChild(node, "NAME");
+        if (nameNode != null && nameNode.getValue() != null) {
+            String funcName = nameNode.getValue();
+            SymbolTableEntry funcEntry = symbolTable.lookupInScope(funcName, "Function");
+            if (funcEntry == null) {
+                errors.add("Undeclared function: '" + funcName + "' at node " + node.getNodeId());
+            }
+        }
+        
+        // Analyze children (INPUT parameters)
+        for (ASTNode child : node.getChildren()) {
+            analyzeNode(child);
+        }
+    }
+
     public void printResults() {
         System.out.println("\n" + "=".repeat(50));
         System.out.println("         SEMANTIC ANALYSIS RESULTS");
