@@ -21,7 +21,6 @@ public class ASTNode {
         this.value = null;
         this.type = null;  //added for SPL_Types 
     }
-    }
     
     public ASTNode(String nodeType, String value) {
         this.nodeId = ++nodeCounter;
