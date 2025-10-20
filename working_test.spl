@@ -1,0 +1,18 @@
+glob { globalvar } 
+proc { 
+    myproc ( param ) { 
+        local { localvar } 
+        localvar = param ; 
+        print localvar 
+    } 
+} 
+func { } 
+main { 
+    var { mainvar result } 
+    mainvar = 100 ; 
+    result = globalvar ; 
+    print mainvar ; 
+    print result ; 
+    print 42 ; 
+    halt 
+}

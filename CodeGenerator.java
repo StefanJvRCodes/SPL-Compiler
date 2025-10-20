@@ -1,0 +1,342 @@
+import java.util.*;
+
+public class CodeGenerator {
+    private SymbolTable symbolTable;
+    private StringBuilder targetCode;
+    private Map<String, ASTNode> procedureDefinitions;
+    private Map<String, ASTNode> functionDefinitions;
+    
+    public CodeGenerator(SymbolTable symbolTable) {
+        this.symbolTable = symbolTable;
+        this.targetCode = new StringBuilder();
+        this.procedureDefinitions = new HashMap<>();
+        this.functionDefinitions = new HashMap<>();
+    }
+    
+    public String generateCode(ASTNode ast) {
+        targetCode.setLength(0);
+        
+        collectFunctionAndProcedureDefinitions(ast);
+        
+        ASTNode mainNode = findMainProgram(ast);
+        if (mainNode != null) {
+            generateMainProgram(mainNode);
+        }
+        
+        return targetCode.toString();
+    }
+    
+    private void collectFunctionAndProcedureDefinitions(ASTNode node) {
+        if (node == null) return;
+        
+        if ("PDEF".equals(node.getNodeType())) {
+            ASTNode nameNode = node.getChildren().get(0);
+            if (nameNode != null && "NAME".equals(nameNode.getNodeType())) {
+                procedureDefinitions.put(nameNode.getValue(), node);
+            }
+        } else if ("FDEF".equals(node.getNodeType())) {
+            ASTNode nameNode = node.getChildren().get(0);
+            if (nameNode != null && "NAME".equals(nameNode.getNodeType())) {
+                functionDefinitions.put(nameNode.getValue(), node);
+            }
+        }
+        
+        for (ASTNode child : node.getChildren()) {
+            collectFunctionAndProcedureDefinitions(child);
+        }
+    }
+    
+    private ASTNode findMainProgram(ASTNode node) {
+        if (node == null) return null;
+        
+        if ("MAINPROG".equals(node.getNodeType())) {
+            return node;
+        }
+        
+        for (ASTNode child : node.getChildren()) {
+            ASTNode found = findMainProgram(child);
+            if (found != null) return found;
+        }
+        
+        return null;
+    }
+    
+    private void generateMainProgram(ASTNode mainProg) {
+        for (ASTNode child : mainProg.getChildren()) {
+            if ("VARIABLES".equals(child.getNodeType())) {
+                generateVariables(child);
+            } else if ("ALGO".equals(child.getNodeType())) {
+                generateAlgo(child);
+            }
+        }
+    }
+    
+    private void generateVariables(ASTNode variables) {
+        // Translation Advice: Variable-Declarations do not get translated to target code
+        // They were only needed for filling the Symbol-Table
+    }
+    
+    private void generateProcedure(ASTNode pdef) {
+        // Translation Advice: The Sub-Tree "under" tree-node PDEF will later be used for "inlining"
+        // For now, we just store the definition for potential inlining
+    }
+    
+    private void generateFunction(ASTNode fdef) {
+        // Translation Advice: The Sub-Tree "under" tree-node FDEF will later be used for "inlining"  
+        // For now, we just store the definition for potential inlining
+    }
+    
+    private void generateBody(ASTNode body) {
+        for (ASTNode child : body.getChildren()) {
+            if ("MAXTHREE".equals(child.getNodeType())) {
+                generateMaxThree(child);
+            } else if ("ALGO".equals(child.getNodeType())) {
+                generateAlgo(child);
+            }
+        }
+    }
+    
+    private void generateMaxThree(ASTNode maxThree) {
+        // Translation Advice: Variable-Declarations do not get translated to target code
+        // Only the ALGO will get translated
+    }
+    
+    private void generateAlgo(ASTNode algo) {
+        if (algo == null || algo.getChildren().isEmpty()) {
+            return;
+        }
+        
+        // Translation Advice: Similar to Trans(Stat → Stat1 ; Stat2) in Fig.6.5 of textbook
+        for (ASTNode child : algo.getChildren()) {
+            if ("HALT".equals(child.getNodeType()) || 
+                "PRINT".equals(child.getNodeType()) || 
+                "ASSIGN".equals(child.getNodeType()) ||
+                "WHILE".equals(child.getNodeType()) ||
+                "DO".equals(child.getNodeType()) ||
+                "IF".equals(child.getNodeType())) {
+                
+                generateInstruction(child);
+                targetCode.append("\n");
+            } else if ("ALGO".equals(child.getNodeType())) {
+                generateAlgo(child);
+            }
+        }
+    }
+    
+    private void generateInstruction(ASTNode instr) {
+        String nodeType = instr.getNodeType();
+        
+        switch (nodeType) {
+            case "HALT":
+                generateHalt();
+                break;
+            case "PRINT":
+                generatePrint(instr);
+                break;
+            case "ASSIGN":
+                generateAssign(instr);
+                break;
+            case "WHILE":
+                generateWhile(instr);
+                break;
+            case "DO":
+                generateDo(instr);
+                break;
+            case "IF":
+                generateIf(instr);
+                break;
+        }
+    }
+    
+    private void generateHalt() {
+        // Translation Advice: Trans(halt) is { target_code = " STOP "; return(target_code); }
+        targetCode.append("STOP");
+    }
+    
+    private void generatePrint(ASTNode printNode) {
+        // Translation Advice: Trans(print OUTPUT)
+        if (printNode.getChildren().isEmpty()) {
+            return;
+        }
+        
+        ASTNode outputNode = printNode.getChildren().get(0);
+        String code = "";
+        
+        if ("ATOM".equals(outputNode.getNodeType())) {
+            if (outputNode.getValue() != null) {
+                // Check if it's a string (starts and ends with quotes) or number
+                String value = outputNode.getValue();
+                if (value.startsWith("\"") && value.endsWith("\"")) {
+                    // It's a string literal - use as is
+                    code = " " + value + " ";
+                } else if (isNumeric(value)) {
+                    // It's a number
+                    code = " " + value + " ";
+                } else {
+                    // It's some other literal value
+                    code = " " + value + " ";
+                }
+            } else if (!outputNode.getChildren().isEmpty() && 
+                       "VAR".equals(outputNode.getChildren().get(0).getNodeType())) {
+                // It's a variable - lookup in symbol table
+                String varName = outputNode.getChildren().get(0).getValue();
+                SymbolTableEntry entry = symbolTable.lookup(varName);
+                if (entry != null) {
+                    code = " " + entry.getName() + " ";
+                } else {
+                    code = " " + varName + " ";
+                }
+            }
+        }
+        
+        targetCode.append("PRINT").append(code);
+    }
+    
+    private void generateAssign(ASTNode assignNode) {
+        // Translation Advice: Similar to Trans(Stat → id := Exp) in Fig.6.5 of textbook
+        // however with a normal = (instead of the textbook's :=) in generated target code
+        
+        if (assignNode.getChildren().size() >= 2) {
+            ASTNode varNode = assignNode.getChildren().get(0);
+            ASTNode termNode = assignNode.getChildren().get(1);
+            
+            if ("VAR".equals(varNode.getNodeType())) {
+                String varName = varNode.getValue();
+                SymbolTableEntry entry = symbolTable.lookup(varName);
+                String targetVar = (entry != null) ? entry.getName() : varName;
+                
+                targetCode.append(targetVar).append(" = ");
+                generateTerm(termNode);
+            }
+        }
+    }
+    
+    private void generateAtom(ASTNode atom) {
+        // Translation Advice: Similar to Trans(Exp → id) and Trans(Exp → num) in Fig.6.3
+        // however with normal = (instead of textbook's :=) in generated target code
+        
+        if (atom.getValue() != null) {
+            // It's a number
+            if (isNumeric(atom.getValue())) {
+                targetCode.append(atom.getValue());
+            } else {
+                // It's a string or other literal
+                targetCode.append(atom.getValue());
+            }
+        } else if (!atom.getChildren().isEmpty() && 
+                   "VAR".equals(atom.getChildren().get(0).getNodeType())) {
+            // It's a variable
+            String varName = atom.getChildren().get(0).getValue();
+            SymbolTableEntry entry = symbolTable.lookup(varName);
+            if (entry != null) {
+                targetCode.append(entry.getName());
+            } else {
+                targetCode.append(varName);
+            }
+        }
+    }
+    
+    private void generateTerm(ASTNode term) {
+        if (term == null) return;
+        
+        String nodeType = term.getNodeType();
+        
+        switch (nodeType) {
+            case "ATOM":
+                generateAtom(term);
+                break;
+            case "UNOP":
+                generateUnaryOperation(term);
+                break;
+            case "BINOP_EXPR":
+                generateBinaryOperation(term);
+                break;
+            default:
+                // Fallback for other term types
+                for (ASTNode child : term.getChildren()) {
+                    generateTerm(child);
+                }
+                break;
+        }
+    }
+    
+    private void generateUnaryOperation(ASTNode unopNode) {
+        if (unopNode.getChildren().isEmpty()) return;
+        
+        String operator = unopNode.getValue();
+        ASTNode operand = unopNode.getChildren().get(0);
+        
+        targetCode.append("(").append(operator).append(" ");
+        generateTerm(operand);
+        targetCode.append(")");
+    }
+    
+    private void generateBinaryOperation(ASTNode binopExpr) {
+        if (binopExpr.getChildren().size() >= 3) {
+            ASTNode leftOperand = binopExpr.getChildren().get(0);
+            ASTNode operator = binopExpr.getChildren().get(1);
+            ASTNode rightOperand = binopExpr.getChildren().get(2);
+            
+            targetCode.append("(");
+            generateTerm(leftOperand);
+            targetCode.append(" ").append(operator.getValue()).append(" ");
+            generateTerm(rightOperand);
+            targetCode.append(")");
+        }
+    }
+    
+    private void generateWhile(ASTNode whileNode) {
+        if (whileNode.getChildren().size() >= 2) {
+            targetCode.append(" WHILE ");
+            generateTerm(whileNode.getChildren().get(0));
+            targetCode.append(" DO { ");
+            generateAlgo(whileNode.getChildren().get(1));
+            targetCode.append(" } ");
+        }
+    }
+    
+    private void generateDo(ASTNode doNode) {
+        if (doNode.getChildren().size() >= 2) {
+            targetCode.append(" DO { ");
+            generateAlgo(doNode.getChildren().get(0));
+            targetCode.append(" } UNTIL ");
+            generateTerm(doNode.getChildren().get(1));
+            targetCode.append(" ");
+        }
+    }
+    
+    private void generateIf(ASTNode ifNode) {
+        if (ifNode.getChildren().size() >= 2) {
+            targetCode.append(" IF ");
+            generateTerm(ifNode.getChildren().get(0));
+            targetCode.append(" THEN { ");
+            generateAlgo(ifNode.getChildren().get(1));
+            targetCode.append(" } ");
+            
+            if (ifNode.getChildren().size() >= 3) {
+                targetCode.append(" ELSE { ");
+                generateAlgo(ifNode.getChildren().get(2));
+                targetCode.append(" } ");
+            }
+        }
+    }
+    
+    private boolean isNumeric(String str) {
+        try {
+            Double.parseDouble(str);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+    
+    public void printResults() {
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println("                CODE GENERATION");
+        System.out.println("=".repeat(60));
+        System.out.println("Generated Target Code:");
+        System.out.println("-".repeat(60));
+        System.out.println(targetCode.toString());
+        System.out.println("=".repeat(60));
+    }
+}

@@ -58,6 +58,15 @@ public class SPLCompiler {
                 boolean typeSuccess = typeChecker.check(ast);
                 typeChecker.printResults();
                 
+                // Code generation (only if both semantic analysis and type checking passed)
+                if (typeSuccess) {
+                    System.out.println("\n[3] CODE GENERATION PHASE...");
+                    CodeGenerator codeGen = new CodeGenerator(analyzer.getSymbolTable());
+                    String targetCode = codeGen.generateCode(ast);
+                    codeGen.printResults();
+                    System.out.println("✓ Code generation completed successfully!");
+                }
+                
                 System.out.println("\n" + "=".repeat(60));
                 System.out.println("COMPILATION " + 
                     (semanticSuccess && typeSuccess ? "SUCCESSFUL" : "FAILED"));
