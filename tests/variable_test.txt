@@ -1,0 +1,13 @@
+glob { num result } 
+proc { } 
+func { } 
+main { 
+    var { value temp } 
+    value = 123 ; 
+    temp = num ; 
+    result = value ; 
+    print value ; 
+    print temp ; 
+    print result ; 
+    halt 
+}

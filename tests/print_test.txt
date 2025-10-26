@@ -1,0 +1,13 @@
+glob { global1 } 
+proc { } 
+func { } 
+main { 
+    var { local1 } 
+    local1 = 42 ; 
+    global1 = 100 ; 
+    print "Hello" ; 
+    print local1 ; 
+    print global1 ; 
+    print 999 ; 
+    halt 
+}
