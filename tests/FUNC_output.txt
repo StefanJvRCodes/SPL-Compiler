@@ -1,15 +1,16 @@
 ' SPL Compiler Generated Code
 ' Modern BASIC Format
 
-SUB test(x AS INTEGER)
+FUNCTION size(x AS INTEGER) AS INTEGER
     DIM y AS INTEGER
-PRINT x
-END
-END SUB
+y = x + 1
+size = y
+END FUNCTION
+
 
 DIM x AS INTEGER
 
-x = 5
-test(x)
-PRINT x
-END
+x = y
+WHILE NOT x = 5
+x = x + 1
+WEND

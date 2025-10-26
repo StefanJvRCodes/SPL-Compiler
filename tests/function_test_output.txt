@@ -12,6 +12,9 @@ result = x + y
 add = result
 END FUNCTION
 
+DIM x AS INTEGER
+DIM y AS INTEGER
+
 DIM a AS INTEGER
 DIM result AS INTEGER
 
