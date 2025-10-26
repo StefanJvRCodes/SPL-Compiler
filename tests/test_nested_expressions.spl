@@ -1,0 +1,9 @@
+glob { a b c d } 
+proc { } 
+func { } 
+main { 
+    var { result } 
+    result = ( ( ( a plus b ) mult c ) minus d ) ;
+    result = ( neg ( ( a minus b ) div c ) ) ;
+    halt 
+}

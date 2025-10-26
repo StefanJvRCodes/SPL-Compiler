@@ -1,4 +1,4 @@
 glob { } 
 proc { }
-func { add ( ) { local { } halt ; } ; return 1 }
+func { add ( ) { local { } halt ; ; return 1 } }
 main { var { } halt }
