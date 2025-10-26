@@ -1,0 +1,11 @@
+' SPL Compiler Generated Code
+' Modern BASIC Format
+
+FUNCTION add() AS INTEGER
+EXIT SUB
+add = 1
+END FUNCTION
+
+
+
+END

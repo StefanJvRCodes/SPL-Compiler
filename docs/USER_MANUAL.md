@@ -10,20 +10,26 @@
 - Input files must have .spl or .txt extension containing valid SPL programs
 
 ## Installation & Setup
-1. Ensure all Java class files are in the same directory
-2. Main executable class: `SPLCompilerSubmission.class`
+1. Extract all files from the submission ZIP
+2. Navigate to the project directory
+3. Main executable class: `SPLInterface.class` (located in tests/ directory)
 
 ## Usage Instructions
 
 ### Command Line Execution
 ```bash
-java SPLCompilerSubmission <input_file>
+# Option 1: Direct execution
+java SPLInterface <input_file>
+
+# Option 2: Using provided script
+./tests/run.sh <input_file>
 ```
 
 ### Example Usage
 ```bash
-java SPLCompilerSubmission program.spl
-java SPLCompilerSubmission test.txt
+java SPLInterface program.txt
+java SPLInterface FUNC.txt
+./tests/run.sh simple_func_test.txt
 ```
 
 ## Expected Output Messages
