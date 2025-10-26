@@ -1,7 +1,10 @@
 ' SPL Compiler Generated Code
 ' Modern BASIC Format
 
+DIM x AS INTEGER
+
 x = 0
 WHILE NOT x = 5
 x = x + 1
 WEND
+END

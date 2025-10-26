@@ -4,6 +4,5 @@ func { }
 main { 
     var { x }
     x = 0 ;
-    while ( not ( x eq 5 ) ) { x = ( x plus 1 ) ; } ;
     halt
 }

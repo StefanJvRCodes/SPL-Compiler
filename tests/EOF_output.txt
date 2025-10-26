@@ -1,6 +1,0 @@
-' SPL Compiler Generated Code
-' Modern BASIC Format
-
-a = 10
-PRINT a
-END

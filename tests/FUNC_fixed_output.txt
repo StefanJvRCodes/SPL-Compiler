@@ -1,6 +1,0 @@
-' SPL Compiler Generated Code
-' Modern BASIC Format
-
-x = 5
-PRINT x
-END

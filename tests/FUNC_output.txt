@@ -1,10 +1,15 @@
 ' SPL Compiler Generated Code
 ' Modern BASIC Format
 
-x = 5
-REM Begin inlined procedure: test
+SUB test(x AS INTEGER)
+    DIM y AS INTEGER
 PRINT x
-REM Procedure halt
-REM End inlined procedure: test
+END
+END SUB
+
+DIM x AS INTEGER
+
+x = 5
+test(x)
 PRINT x
 END

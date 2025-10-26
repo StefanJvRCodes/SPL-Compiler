@@ -1,4 +1,7 @@
 ' SPL Compiler Generated Code
 ' Modern BASIC Format
 
+DIM x AS INTEGER
+
+x = 0
 END
