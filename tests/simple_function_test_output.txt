@@ -1,0 +1,15 @@
+' SPL Compiler Generated Code
+' Modern BASIC Format
+
+FUNCTION add(x AS INTEGER) AS INTEGER
+    DIM y AS INTEGER
+y = x
+add = y
+END FUNCTION
+
+
+DIM a AS INTEGER
+
+a = 5
+PRINT a
+END

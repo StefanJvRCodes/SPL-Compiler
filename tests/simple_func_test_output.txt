@@ -1,0 +1,15 @@
+' SPL Compiler Generated Code
+' Modern BASIC Format
+
+FUNCTION size(x AS INTEGER) AS INTEGER
+    DIM y AS INTEGER
+y = x + 1
+size = y
+END FUNCTION
+
+
+DIM x AS INTEGER
+
+x = size(0)
+PRINT x
+END

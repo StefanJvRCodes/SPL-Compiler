@@ -1,24 +1,14 @@
 glob { } 
-
 proc { } 
-
 func { size ( x ) { 
     local { y } 
         y = ( x plus 1 ) ; 
         ; return y 
     } 
 }
-
 main { 
     var { x }
-    x = 0 ;
-    print x ;
-    x = size ( x ) ;
-    print x ;
-    while ( not ( x eq 5 ) ) { 
-        print x ;
-        x = ( x plus 1 ) ; 
-    }
+    x = size ( 0 ) ;
     print x ;
     halt
 }
