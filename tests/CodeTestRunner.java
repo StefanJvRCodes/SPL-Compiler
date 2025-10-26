@@ -1,5 +1,7 @@
 import java.io.*;
 import java.util.*;
+// Import SPLCompiler from parent directory
+import java.nio.file.Paths;
 
 public class CodeTestRunner {
     private static int testsPassed = 0;

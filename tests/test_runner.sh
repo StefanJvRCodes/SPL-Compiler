@@ -7,7 +7,9 @@ echo
 
 # Compile the Java files
 echo "[1] Compiling SPL Compiler..."
-javac *.java
+cd ..
+javac -cp "core_compiler:tests" core_compiler/*.java tests/*.java
+cd tests
 if [ $? -ne 0 ]; then
     echo "❌ Compilation failed!"
     exit 1
@@ -18,13 +20,13 @@ echo
 # Test 1: Original example
 echo "[2] Testing original example.spl..."
 echo "------------------------------------------------------"
-java SPLCompiler example.spl
+java -cp "../core_compiler:../tests" SPLCompiler example.spl
 echo
 
 # Test 2: Comprehensive test
 echo "[3] Testing comprehensive_test.spl..."
 echo "------------------------------------------------------"
-java SPLCompiler comprehensive_test.spl
+java -cp "../core_compiler:../tests" SPLCompiler comprehensive_test.spl
 echo
 
 # Test 3: Simple assignment test
@@ -49,7 +51,7 @@ cat simple_test.spl
 echo
 echo "Running simple_test.spl:"
 echo "------------------------------------------------------"
-java SPLCompiler simple_test.spl
+java -cp "../core_compiler:../tests" SPLCompiler simple_test.spl
 echo
 
 # Test 4: Multiple prints test
@@ -74,7 +76,7 @@ cat print_test.spl
 echo
 echo "Running print_test.spl:"
 echo "------------------------------------------------------"
-java SPLCompiler print_test.spl
+java -cp "../core_compiler:../tests" SPLCompiler print_test.spl
 echo
 
 echo "======================================================"
