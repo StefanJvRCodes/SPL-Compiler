@@ -1,0 +1,4 @@
+glob { } 
+proc { test ( ) { local { } halt ; } }
+func { }
+main { var { } halt }

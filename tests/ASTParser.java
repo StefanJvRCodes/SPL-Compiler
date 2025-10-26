@@ -597,7 +597,6 @@ public class ASTParser {
             
             // Check for return keyword (end of function algorithm)
             if ("return".equals(currToken)) {
-                System.out.println("DEBUG: parseINSTR found return keyword, putting back and returning null");
                 tf.prepend(currToken);
                 return null;
             }
@@ -657,7 +656,6 @@ public class ASTParser {
             ASTNode node = new ASTNode("ASSIGN");
             
             String currToken = tf.next();
-            System.out.println("DEBUG: parseASSIGN called with token: " + currToken);
             if (isLegal(currToken)) {
                 ASTNode varNode = new ASTNode("VAR", currToken);
                 node.addChild(varNode);

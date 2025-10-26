@@ -1,0 +1,10 @@
+' SPL Compiler Generated Code
+' Modern BASIC Format
+
+x = 5
+REM Begin inlined procedure: test
+PRINT x
+REM Procedure halt
+REM End inlined procedure: test
+PRINT x
+END

@@ -1,0 +1,11 @@
+glob { } 
+proc { }
+func { size ( x ) { local { y } y = ( x plus 1 ) ; return y } }
+main { 
+    var { x } 
+    var { result }
+    x = 5 ;
+    result = size ( x ) ;
+    print result ;
+    halt
+}

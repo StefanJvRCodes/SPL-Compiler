@@ -274,7 +274,7 @@ public class SPLInterface {
     }
     
     private static String getTokenType(String token) {
-        if (token.matches("glob|proc|func|main|var|halt|print")) return "KEYWORD";
+        if (token.matches("glob|proc|func|main|var|halt|print|return|local|while|do|until|if|else|not|eq|plus|minus|mult|div|neg|and|or")) return "KEYWORD";
         if (token.matches("[{}()]")) return "DELIMITER";
         if (token.matches("[=;]")) return "OPERATOR";
         if (token.matches("\\d+")) return "LITERAL";
@@ -284,8 +284,9 @@ public class SPLInterface {
     }
     
     private static String classifyToken(String token) {
-        if (token.matches("glob|proc|func|main|var|halt|print")) return "SPL reserved word";
+        if (token.matches("glob|proc|func|main|var|halt|print|return|local|while|do|until|if|else|not|eq|plus|minus|mult|div|neg|and|or")) return "SPL reserved word";
         if (token.matches("[{}]")) return token.equals("{") ? "Block start" : "Block end";
+        if (token.matches("[()]")) return token.equals("(") ? "Parameter start" : "Parameter end";
         if (token.equals("=")) return "Assignment operator";
         if (token.equals(";")) return "Statement terminator";
         if (token.matches("\\d+")) return "Numeric constant";

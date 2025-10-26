@@ -1,0 +1,12 @@
+' SPL Compiler Generated Code
+' Modern BASIC Format
+
+SUB increment(x AS INTEGER)
+x = x + 1
+PRINT x
+END SUB
+
+DIM x AS INTEGER
+
+x = 5
+increment(x)

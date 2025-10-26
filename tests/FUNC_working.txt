@@ -1,0 +1,17 @@
+glob { } 
+proc { increment ( x ) { 
+    local { } 
+        x = ( x plus 1 ) ; 
+        print x ; 
+    } 
+}
+func { }
+main { 
+    var { x }
+    x = 5 ;
+    increment ( x ) ;
+    while ( not ( x eq 10 ) ) { 
+        increment ( x ) ; 
+    }
+    halt
+}

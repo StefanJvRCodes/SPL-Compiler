@@ -65,8 +65,10 @@ public class ASTNode {
     }
     
     public void addChild(ASTNode child) {
-        children.add(child);
-        child.parent = this;
+        if (child != null) {
+            children.add(child);
+            child.parent = this;
+        }
     }
     
     public void addChildren(List<ASTNode> children) {

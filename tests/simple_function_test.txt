@@ -1,0 +1,13 @@
+glob { } 
+proc { } 
+func { add ( x ) { 
+    local { y } 
+        y = x ; 
+    } ; return y 
+}
+main { 
+    var { a }
+    a = 5 ;
+    print a ;
+    halt
+}

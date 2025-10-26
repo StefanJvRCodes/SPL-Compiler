@@ -1,0 +1,5 @@
+' SPL Compiler Generated Code
+' Modern BASIC Format
+
+x = 5
+END
