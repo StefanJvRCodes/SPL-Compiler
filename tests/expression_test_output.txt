@@ -1,7 +1,0 @@
-a = 10
-b = 5
-result = a + b
-PRINT result 
-result = NEG a
-PRINT result 
-STOP
