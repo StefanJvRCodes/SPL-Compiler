@@ -1,4 +1,5 @@
-//A updated this file for type checking (SPL_Types):
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class SPLCompiler {
     public static void main(String[] args) {
@@ -65,6 +66,13 @@ public class SPLCompiler {
                     String targetCode = codeGen.generateCode(ast);
                     codeGen.printResults();
                     System.out.println("✓ Code generation completed successfully!");
+
+                    try (FileWriter writer = new FileWriter("BASICCode.txt")) {
+                        writer.write(targetCode);
+                        System.out.println("✓ Generated code written to BASICCode.txt");
+                    } catch (IOException e) {
+                        System.out.println("✗ Failed to write generated code to file: " + e.getMessage());
+                    }
                 }
                 
                 System.out.println("\n" + "=".repeat(60));
