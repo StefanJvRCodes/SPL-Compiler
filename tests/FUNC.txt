@@ -1,10 +1,13 @@
 glob { } 
-proc { test ( x ) { local { y } print x ; halt ; } }
-func { }
+proc { } 
+func { size ( x ) { 
+    local { y } 
+        y = ( x plus 1 ) ; 
+        return y 
+    } 
+}
 main { 
     var { x }
-    x = 5 ;
-    test ( x ) ;
-    print x ;
-    halt
+    x = size ( x ) ;
+    while ( not ( x eq 5 ) ) { x = ( x plus 1 ) }
 }

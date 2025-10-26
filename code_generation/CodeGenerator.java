@@ -249,7 +249,7 @@ public class CodeGenerator {
         // Generate procedure body algorithm
         for (ASTNode child : body.getChildren()) {
             if ("ALGO".equals(child.getNodeType())) {
-                generateAlgo(child);
+                generateAlgoForSubroutine(child);
                 break;
             }
         }
@@ -267,7 +267,7 @@ public class CodeGenerator {
         // Generate function body algorithm
         for (ASTNode child : body.getChildren()) {
             if ("ALGO".equals(child.getNodeType())) {
-                generateAlgo(child);
+                generateAlgoForSubroutine(child);
                 break;
             }
         }
@@ -281,6 +281,55 @@ public class CodeGenerator {
                     addLine("    DIM " + varNode.getValue() + " AS INTEGER");
                 }
             }
+        }
+    }
+    
+    private void generateAlgoForSubroutine(ASTNode algo) {
+        if (algo == null || algo.getChildren().isEmpty()) {
+            return;
+        }
+        
+        // Translation Advice: Similar to Trans(Stat → Stat1 ; Stat2) in Fig.6.5 of textbook
+        // but for subroutine context where HALT becomes EXIT SUB
+        for (ASTNode child : algo.getChildren()) {
+            if ("HALT".equals(child.getNodeType()) || 
+                "PRINT".equals(child.getNodeType()) || 
+                "ASSIGN".equals(child.getNodeType()) ||
+                "WHILE".equals(child.getNodeType()) ||
+                "DO".equals(child.getNodeType()) ||
+                "IF".equals(child.getNodeType()) ||
+                "PROC_CALL".equals(child.getNodeType())) {
+                
+                String instruction = generateInstructionCodeForSubroutine(child);
+                if (!instruction.isEmpty()) {
+                    addLine(instruction);
+                }
+            } else if ("ALGO".equals(child.getNodeType())) {
+                generateAlgoForSubroutine(child);
+            }
+        }
+    }
+    
+    private String generateInstructionCodeForSubroutine(ASTNode instr) {
+        String nodeType = instr.getNodeType();
+        
+        switch (nodeType) {
+            case "HALT":
+                return "EXIT SUB";  // In subroutines, HALT becomes EXIT SUB
+            case "PRINT":
+                return generatePrintCode(instr);
+            case "ASSIGN":
+                return generateAssignCode(instr);
+            case "WHILE":
+                return generateWhileCode(instr);
+            case "DO":
+                return generateDoCode(instr);
+            case "IF":
+                return generateIfCode(instr);
+            case "PROC_CALL":
+                return generateProcedureCallCode(instr);
+            default:
+                return "";
         }
     }
     

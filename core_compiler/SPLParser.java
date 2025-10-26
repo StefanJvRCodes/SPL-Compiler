@@ -490,22 +490,34 @@ public class SPLParser {
         }
     }
     
-    public static ASTNode parseALGO(TokenFeeder tf) {
+   public static ASTNode parseALGO(TokenFeeder tf) {
         try {
             ASTNode node = new ASTNode("ALGO");
-            
+
             // Check if we've reached the end of ALGO (return, }, etc.)
             String lookAhead = tf.next();
             if (lookAhead == null || "}".equals(lookAhead) || "return".equals(lookAhead)) {
                 tf.prepend(lookAhead);
                 return node; // Empty ALGO
             }
-            tf.prepend(lookAhead);
-            
+           //tf.prepend(lookAhead);
+
+            if (";".equals(lookAhead)){
+                String lookAheadAgain = tf.next();
+                if ("return".equals(lookAheadAgain)){
+                    tf.prepend(lookAheadAgain);
+                    tf.prepend(lookAhead);
+                    return node;
+                } else {
+                    tf.prepend(lookAheadAgain);
+                    tf.prepend(lookAhead);
+                }
+            }
+
             ASTNode instr = parseINSTR(tf);
             if (instr != null) {
                 node.addChild(instr);
-                
+
                 String currToken = tf.next();
                 if (currToken != null && ";".equals(currToken)) {
                     // Check if next part is return or end
@@ -520,10 +532,10 @@ public class SPLParser {
                     tf.prepend(currToken);
                 }
             }
-            
+
             return node;
         } catch (Exception e) {
-            System.out.println("Syntax error: " + e.getMessage());
+            System.out.println("Syntax error at ALGO: " + e.getMessage());
             return null;
         }
     }
