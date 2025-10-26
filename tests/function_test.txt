@@ -1,22 +1,22 @@
 glob { x y }
 proc { 
-    test(a) { 
+    test ( a ) { 
         local { b } 
         print a 
     }
 }
 func { 
-    add(x y) { 
+    add ( x y ) { 
         local { result } 
-        result = (x plus y) ; 
-        return result 
+        result = ( x plus y ) ; 
+        ; return result 
     }
 }
 main {
     var { a result }
     a = 10 ;
-    result = add(a 5) ;
+    result = add ( a 5 ) ;
     print result ;
-    test(result) ;
+    test ( result ) ;
     halt
 }
