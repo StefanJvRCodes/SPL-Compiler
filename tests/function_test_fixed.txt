@@ -2,14 +2,14 @@ glob { x y }
 proc { 
     test ( a ) { 
         local { b } 
-        print a 
+        print a ;
     }
 }
 func { 
     add ( x y ) { 
         local { result } 
         result = ( x plus y ) ; 
-        ; return result 
+        return result ;
     }
 }
 main {

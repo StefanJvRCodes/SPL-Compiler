@@ -239,7 +239,7 @@ public class SPLInterface {
             String content = new String(java.nio.file.Files.readAllBytes(path));
             
             // Basic token analysis display
-            String[] tokens = content.split("\\s+|(?=[{}=;])|(?<=[{}=;])");
+            String[] tokens = content.split("\\s+|(?=[{}=;()])|(?<=[{}=;()])");
             int position = 1;
             
             for (String token : tokens) {

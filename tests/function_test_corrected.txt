@@ -2,18 +2,20 @@ glob { x y }
 proc { 
     test ( a ) { 
         local { b } 
-        print a 
+        print a ;
     }
 }
 func { 
-    add ( x y ) { 
+    add ( a b ) { 
         local { result } 
-        result = ( x plus y ) ; 
-        ; return result 
+        result = ( a plus b ) ; 
+        return result
     }
 }
 main {
     var { a result }
+    x = 3 ;
+    y = 7 ;
     a = 10 ;
     result = add ( a 5 ) ;
     print result ;

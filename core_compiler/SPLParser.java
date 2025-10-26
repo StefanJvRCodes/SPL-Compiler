@@ -240,7 +240,7 @@ public class SPLParser {
             ASTNode fdef = parseFDEF(tf);
             if (fdef != null) {
                 node.addChild(fdef);
-                node.addChild(parseFUNCDEFS(tf)); // Recursive call - FIXED ORDER
+                node.addChild(parseFUNCDEFS(tf)); // Recursive call
             }
             
             return node;
@@ -324,13 +324,16 @@ public class SPLParser {
                 throw new Exception("Expected '{', found: " + currToken);
             }
             
+            // Parse the body (which includes ALGO)
             node.addChild(parseBODY(tf));
             
+            // Now we expect the semicolon that's part of FDEF syntax
             currToken = tf.next();
             if (!";".equals(currToken)) {
                 throw new Exception("Expected ';', found: " + currToken);
             }
             
+            // Then the return keyword
             currToken = tf.next();
             if (!"return".equals(currToken)) {
                 throw new Exception("Expected 'return', found: " + currToken);
@@ -493,37 +496,51 @@ public class SPLParser {
     public static ASTNode parseALGO(TokenFeeder tf) {
         try {
             ASTNode node = new ASTNode("ALGO");
-            
-            // Check if we've reached the end of ALGO (return, }, etc.)
+
+            // Check if we've reached the end of ALGO
             String lookAhead = tf.next();
-            if (lookAhead == null || "}".equals(lookAhead) || "return".equals(lookAhead)) {
+            if (lookAhead == null || "}".equals(lookAhead)) {
                 tf.prepend(lookAhead);
                 return node; // Empty ALGO
             }
+
+            // Parse the first instruction
             tf.prepend(lookAhead);
-            
             ASTNode instr = parseINSTR(tf);
             if (instr != null) {
                 node.addChild(instr);
-                
+
+                // Check for semicolon
                 String currToken = tf.next();
-                if (currToken != null && ";".equals(currToken)) {
-                    // Check if next part is return or end
-                    String nextLookAhead = tf.next();
-                    if (nextLookAhead != null && !"return".equals(nextLookAhead) && !"}".equals(nextLookAhead)) {
-                        tf.prepend(nextLookAhead);
+                if (";".equals(currToken)) {
+                    // Look ahead to see if there's another instruction
+                    String nextToken = tf.next();
+                    
+                    // Check if the next token can start an INSTR
+                    // Valid instruction starters: halt, print, legal name (for assignment/call), while, do, if
+                    boolean canStartInstr = nextToken != null && 
+                        ("halt".equals(nextToken) || "print".equals(nextToken) || 
+                         "while".equals(nextToken) || "do".equals(nextToken) || 
+                         "if".equals(nextToken) || isLegal(nextToken));
+                    
+                    if (canStartInstr) {
+                        // There's another instruction coming, recurse
+                        tf.prepend(nextToken);
                         node.addChild(parseALGO(tf)); // Recursive call
                     } else {
-                        tf.prepend(nextLookAhead);
+                        // Not an instruction, put everything back
+                        tf.prepend(nextToken);
+                        tf.prepend(currToken);
                     }
                 } else {
+                    // No semicolon means this is a single instruction (per grammar: ALGO ::= INSTR)
                     tf.prepend(currToken);
                 }
             }
-            
+
             return node;
         } catch (Exception e) {
-            System.out.println("Syntax error: " + e.getMessage());
+            System.out.println("Syntax error at ALGO: " + e.getMessage());
             return null;
         }
     }
@@ -881,13 +898,11 @@ public class SPLParser {
     
     // Validation methods
     private static boolean isValidNumber(String str) {
-        // Regular expression: ( 0 | [1...9][0...9]* )
         Pattern pattern = Pattern.compile("^(0|[1-9][0-9]*)$");
         return pattern.matcher(str).matches();
     }
     
     private static boolean isString(String str) {
-        // String: any sequence of digits or letters between quotation marks, max length 15
         if (str.length() < 2 || !str.startsWith("\"") || !str.endsWith("\"")) {
             return false;
         }
@@ -904,7 +919,6 @@ public class SPLParser {
     }
     
     private static boolean isLegal(String str) {
-        // Regular expression: [a...z]{a...z}*{0...9}*
         Pattern pattern = Pattern.compile("^[a-z][a-z]*[0-9]*$");
         
         if (!pattern.matcher(str).matches()) {
@@ -926,117 +940,5 @@ public class SPLParser {
         return "eq".equals(str) || ">".equals(str) || "or".equals(str) || 
                "and".equals(str) || "plus".equals(str) || "minus".equals(str) || 
                "mult".equals(str) || "div".equals(str);
-    }
-    
-    public static void ASSIGN(TokenFeeder tf) {
-        try {
-            VAR(tf);
-            String currToken = tf.next();
-            if (currToken == null) {
-                throw new Exception("Unexpected end of input");
-            }
-            if (!"=".equals(currToken)) {
-                throw new Exception("Expected '=', found: " + currToken);
-            }
-            try {
-                TERM(tf);
-            } catch (Exception e) {
-                NAME(tf);
-                currToken = tf.next();
-                if (currToken == null) {
-                    throw new Exception("Unexpected end of input");
-                }
-                if (!"(".equals(currToken)) {
-                    throw new Exception("Expected '(', found: " + currToken);
-                }
-                INPUT(tf);
-                currToken = tf.next();
-                if (currToken == null) {
-                    throw new Exception("Unexpected end of input");
-                }
-                if (!")".equals(currToken)) {
-                    throw new Exception("Expected ')', found: " + currToken);
-                }
-            }
-        } catch (Exception e) {
-            System.out.println("Syntax error: " + e.getMessage());
-        }
-    }
-    
-    public static void TERM(TokenFeeder tf) {
-        String currToken = tf.next();
-        try {
-            if (currToken == null) {
-                throw new Exception("Unexpected end of input");
-            }
-            if ("(".equals(currToken)) {
-                try {
-                    UNOP(tf);
-                    TERM(tf);
-                } catch (Exception e) {
-                    TERM(tf);
-                    BINOP(tf);
-                    TERM(tf);
-                }
-            } else {
-                tf.prepend(currToken);
-                ATOM(tf);
-            }
-        } catch (Exception e) {
-            System.out.println("Syntax error: " + e.getMessage());
-            tf.prepend(currToken);
-        }
-    }
-    
-    public static void VAR(TokenFeeder tf) {
-        String currToken = tf.next();
-        if (currToken == null || !isLegal(currToken)) {
-            throw new RuntimeException("Expected variable, found: " + currToken);
-        }
-    }
-    
-    public static void NAME(TokenFeeder tf) {
-        String currToken = tf.next();
-        if (currToken == null || !isLegal(currToken)) {
-            throw new RuntimeException("Expected name, found: " + currToken);
-        }
-    }
-    
-    public static void INPUT(TokenFeeder tf) {
-        // Parse up to 3 ATOM elements for INPUT
-        for (int i = 0; i < 3; i++) {
-            String currToken = tf.next();
-            if (currToken == null || ")".equals(currToken)) {
-                tf.prepend(currToken);
-                break;
-            }
-            if (isValidNumber(currToken) || isLegal(currToken)) {
-                // Valid ATOM, continue
-            } else {
-                tf.prepend(currToken);
-                break;
-            }
-        }
-    }
-    
-    public static void ATOM(TokenFeeder tf) {
-        String currToken = tf.next();
-        if (currToken == null || (!isValidNumber(currToken) && !isLegal(currToken))) {
-            throw new RuntimeException("Expected atom (number or variable), found: " + currToken);
-        }
-    }
-    
-    public static void UNOP(TokenFeeder tf) {
-        String currToken = tf.next();
-        if (currToken == null || !isUnaryOperator(currToken)) {
-            throw new RuntimeException("Expected unary operator, found: " + currToken);
-        }
-    }
-    
-    public static void BINOP(TokenFeeder tf) {
-        String currToken = tf.next();
-        if (currToken == null || !isBinaryOperator(currToken)) {
-            throw new RuntimeException("Expected binary operator, found: " + currToken);
-        }
     }
 }

@@ -1,0 +1,25 @@
+' SPL Compiler Generated Code
+' Modern BASIC Format
+
+SUB test(a AS INTEGER)
+    DIM b AS INTEGER
+PRINT a
+END SUB
+
+FUNCTION add(x AS INTEGER) AS INTEGER
+    DIM result AS INTEGER
+result = x + y
+add = result
+END FUNCTION
+
+DIM x AS INTEGER
+DIM y AS INTEGER
+
+DIM a AS INTEGER
+DIM result AS INTEGER
+
+a = 10
+result = result
+PRINT result
+test(result)
+END

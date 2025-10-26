@@ -10,13 +10,6 @@ END FUNCTION
 
 DIM x AS INTEGER
 
-x = 0
-PRINT x
-x = size(x)
-PRINT x
-WHILE NOT x = 5
-PRINT x
-x = x + 1
-WEND
+x = size(0)
 PRINT x
 END

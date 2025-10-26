@@ -27,6 +27,9 @@ public class CodeGenerator {
         generateProcedureDefinitions();
         generateFunctionDefinitions();
         
+        // Generate global variable declarations before main program
+        generateGlobalVariables(ast);
+        
         // Then generate main program
         ASTNode mainNode = findMainProgram(ast);
         if (mainNode != null) {
@@ -73,6 +76,45 @@ public class CodeGenerator {
         }
         
         return null;
+    }
+    
+    private void generateGlobalVariables(ASTNode ast) {
+        // Find and process global variables (GLOB section)
+        ASTNode globNode = findGlobalVariables(ast);
+        if (globNode != null) {
+            generateGlobalVariableDeclarations(globNode);
+            addLine("");
+        }
+    }
+    
+    private ASTNode findGlobalVariables(ASTNode node) {
+        if (node == null) return null;
+        
+        // Look for GLOB node or VARIABLES node at the top level of SPL_PROG
+        if ("GLOB".equals(node.getNodeType()) || 
+            ("VARIABLES".equals(node.getNodeType()) && node.getParent() != null && 
+             "SPL_PROG".equals(node.getParent().getNodeType()))) {
+            return node;
+        }
+        
+        for (ASTNode child : node.getChildren()) {
+            ASTNode found = findGlobalVariables(child);
+            if (found != null) return found;
+        }
+        
+        return null;
+    }
+    
+    private void generateGlobalVariableDeclarations(ASTNode globNode) {
+        // Generate DIM statements for global variables
+        for (ASTNode child : globNode.getChildren()) {
+            if ("VAR".equals(child.getNodeType())) {
+                addLine("DIM " + child.getValue() + " AS INTEGER");
+            } else if ("VARIABLES".equals(child.getNodeType()) || "MAXTHREE".equals(child.getNodeType())) {
+                // Recursively process nested variable declarations
+                generateGlobalVariableDeclarations(child);
+            }
+        }
     }
     
     private void generateMainProgram(ASTNode mainProg) {
@@ -249,7 +291,7 @@ public class CodeGenerator {
         // Generate procedure body algorithm
         for (ASTNode child : body.getChildren()) {
             if ("ALGO".equals(child.getNodeType())) {
-                generateAlgo(child);
+                generateAlgoForSubroutine(child);
                 break;
             }
         }
@@ -267,7 +309,7 @@ public class CodeGenerator {
         // Generate function body algorithm
         for (ASTNode child : body.getChildren()) {
             if ("ALGO".equals(child.getNodeType())) {
-                generateAlgo(child);
+                generateAlgoForSubroutine(child);
                 break;
             }
         }
@@ -281,6 +323,55 @@ public class CodeGenerator {
                     addLine("    DIM " + varNode.getValue() + " AS INTEGER");
                 }
             }
+        }
+    }
+    
+    private void generateAlgoForSubroutine(ASTNode algo) {
+        if (algo == null || algo.getChildren().isEmpty()) {
+            return;
+        }
+        
+        // Translation Advice: Similar to Trans(Stat → Stat1 ; Stat2) in Fig.6.5 of textbook
+        // but for subroutine context where HALT becomes EXIT SUB
+        for (ASTNode child : algo.getChildren()) {
+            if ("HALT".equals(child.getNodeType()) || 
+                "PRINT".equals(child.getNodeType()) || 
+                "ASSIGN".equals(child.getNodeType()) ||
+                "WHILE".equals(child.getNodeType()) ||
+                "DO".equals(child.getNodeType()) ||
+                "IF".equals(child.getNodeType()) ||
+                "PROC_CALL".equals(child.getNodeType())) {
+                
+                String instruction = generateInstructionCodeForSubroutine(child);
+                if (!instruction.isEmpty()) {
+                    addLine(instruction);
+                }
+            } else if ("ALGO".equals(child.getNodeType())) {
+                generateAlgoForSubroutine(child);
+            }
+        }
+    }
+    
+    private String generateInstructionCodeForSubroutine(ASTNode instr) {
+        String nodeType = instr.getNodeType();
+        
+        switch (nodeType) {
+            case "HALT":
+                return "EXIT SUB";  // In subroutines, HALT becomes EXIT SUB
+            case "PRINT":
+                return generatePrintCode(instr);
+            case "ASSIGN":
+                return generateAssignCode(instr);
+            case "WHILE":
+                return generateWhileCode(instr);
+            case "DO":
+                return generateDoCode(instr);
+            case "IF":
+                return generateIfCode(instr);
+            case "PROC_CALL":
+                return generateProcedureCallCode(instr);
+            default:
+                return "";
         }
     }
     
@@ -480,22 +571,36 @@ public class CodeGenerator {
     }
     
     private String generateFunctionCallCode(ASTNode funcCall) {
-        // Translation Advice: Function calls are inlined and return a value
+        // Generate function call syntax: functionName(parameters)
         if (funcCall.getChildren().size() >= 2) {
             ASTNode nameNode = funcCall.getChildren().get(0);
             ASTNode inputNode = funcCall.getChildren().get(1);
             
             if ("FNAME".equals(nameNode.getNodeType())) {
                 String funcName = nameNode.getValue();
+                StringBuilder callCode = new StringBuilder();
+                callCode.append(funcName).append("(");
                 
-                // Find the function definition
-                ASTNode funcDef = functionDefinitions.get(funcName);
-                if (funcDef != null) {
-                    // Inline the function and return its result
-                    return inlineFunction(funcDef, inputNode);
-                } else {
-                    return "REM Function " + funcName + " not found";
+                // Add parameters from INPUT node
+                if (inputNode != null && "INPUT".equals(inputNode.getNodeType())) {
+                    boolean first = true;
+                    for (ASTNode child : inputNode.getChildren()) {
+                        if ("MAXTHREE".equals(child.getNodeType())) {
+                            for (ASTNode param : child.getChildren()) {
+                                if ("ATOM".equals(param.getNodeType())) {
+                                    if (!first) {
+                                        callCode.append(", ");
+                                    }
+                                    callCode.append(generateAtomCode(param));
+                                    first = false;
+                                }
+                            }
+                        }
+                    }
                 }
+                
+                callCode.append(")");
+                return callCode.toString();
             }
         }
         return "REM Invalid function call";
