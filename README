@@ -1,0 +1,7 @@
+1)Compile all the .java files with the ./compile.sh
+2)Cd into the tests folder with "cd tests"
+3)place your test script into the tests folder
+4)Run the java SPLInterface <your text file name>
+5)see in the tests folder you should have a outputted file along with the cmd interface.
+
+BASIC dialect = modern BASIC/FreeBASIC

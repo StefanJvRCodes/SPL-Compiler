@@ -71,6 +71,12 @@ public class ASTParser {
             
             root.addChild(parseMainSPL(tf));
             
+            // Check for end of file - no more tokens should remain
+            String unexpectedToken = tf.next();
+            if (unexpectedToken != null) {
+                throw new Exception("Unexpected token after main program: " + unexpectedToken);
+            }
+            
             return root;
             
         } catch (Exception e) {
