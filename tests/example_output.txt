@@ -1,1 +1,0 @@
-mainvar1 = globalvar1

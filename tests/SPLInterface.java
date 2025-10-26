@@ -3,10 +3,10 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 
-public class SPLCompilerSubmission {
+public class SPLInterface {
     public static void main(String[] args) {
         if (args.length != 1) {
-            System.out.println("Usage: java SPLCompilerSubmission <input_file>");
+            System.out.println("Usage: java SPLInterface <input_file>");
             System.exit(1);
         }
         

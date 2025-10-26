@@ -1,3 +1,0 @@
-num = 123
-PRINT num 
-STOP
