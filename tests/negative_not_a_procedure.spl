@@ -1,8 +1,0 @@
-glob { x notAProc } 
-proc { } 
-func { } 
-main { 
-    var { a } 
-    notAProc ( x a ) ;
-    halt 
-}

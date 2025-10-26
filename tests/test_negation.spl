@@ -1,9 +1,0 @@
-glob { x } 
-proc { } 
-func { } 
-main { 
-    var { result } 
-    result = ( neg x ) ;
-    result = ( neg ( x plus 5 ) ) ;
-    halt 
-}

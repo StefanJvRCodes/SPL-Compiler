@@ -1,8 +1,0 @@
-glob { x } 
-proc { } 
-func { } 
-main { 
-    var { a } 
-    a = b ;
-    halt 
-}

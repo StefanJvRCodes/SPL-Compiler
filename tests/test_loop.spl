@@ -1,9 +1,0 @@
-glob { x y } 
-proc { } 
-func { } 
-main { 
-    var { a } 
-    while ( x > y ) { 
-        a = x 
-    } ;
-}
