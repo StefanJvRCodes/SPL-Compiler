@@ -1,0 +1,12 @@
+glob { a b c d } 
+proc { } 
+func { } 
+main { 
+    var { result temp } 
+    result = ( a plus b ) ;
+    result = ( c minus d ) ;
+    temp = ( a mult b ) ;
+    temp = ( c div d ) ;
+    result = ( ( a plus b ) mult ( c minus d ) ) ;
+    halt 
+}

@@ -1,0 +1,8 @@
+glob { x y } 
+proc { } 
+func { } 
+main { 
+    var { result } 
+    result = ( x plus y ) ;
+    halt 
+}

@@ -1,0 +1,19 @@
+glob { x y counter } 
+proc { } 
+func { } 
+main { 
+    var { a i } 
+    if ( x > y ) { 
+        a = x 
+    } else { 
+        a = y 
+    } ;
+    while ( a > 0 ) { 
+        a = ( a minus 1 ) 
+    } ;
+    i = 0 ;
+    do { 
+        i = ( i plus 1 ) 
+    } until ( i eq counter ) ;
+    halt 
+}

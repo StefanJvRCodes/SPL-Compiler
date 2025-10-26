@@ -1,0 +1,10 @@
+glob { x y } 
+proc { } 
+func { } 
+main { 
+    var { a } 
+    if ( not ( x > y ) ) { 
+        a = x 
+    } ;
+    halt 
+}
