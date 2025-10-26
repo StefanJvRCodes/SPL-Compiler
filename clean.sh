@@ -32,7 +32,7 @@ echo
 
 echo "[2] Removing compiled files..."
 
-# Remove all .class files
+# Remove all .class files including copies in tests directory
 find . -name "*.class" -type f -delete
 
 # Remove generated output files

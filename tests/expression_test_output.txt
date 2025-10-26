@@ -1,0 +1,10 @@
+' SPL Compiler Generated Code
+' Modern BASIC Format
+
+a = 10
+b = 5
+result = a + b
+PRINT result
+result = - a
+PRINT result
+END

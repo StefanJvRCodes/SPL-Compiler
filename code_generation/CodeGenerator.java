@@ -5,6 +5,7 @@ public class CodeGenerator {
     private StringBuilder targetCode;
     private Map<String, ASTNode> procedureDefinitions;
     private Map<String, ASTNode> functionDefinitions;
+    private int lineNumber;
     
     public CodeGenerator(SymbolTable symbolTable) {
         this.symbolTable = symbolTable;
@@ -16,6 +17,10 @@ public class CodeGenerator {
     public String generateCode(ASTNode ast) {
         targetCode.setLength(0);
         
+        // Add modern BASIC program header
+        targetCode.append("' SPL Compiler Generated Code\n");
+        targetCode.append("' Modern BASIC Format\n\n");
+        
         collectFunctionAndProcedureDefinitions(ast);
         
         ASTNode mainNode = findMainProgram(ast);
@@ -24,6 +29,10 @@ public class CodeGenerator {
         }
         
         return targetCode.toString();
+    }
+    
+    private void addLine(String code) {
+        targetCode.append(code).append("\n");
     }
     
     private void collectFunctionAndProcedureDefinitions(ASTNode node) {
@@ -115,45 +124,218 @@ public class CodeGenerator {
                 "DO".equals(child.getNodeType()) ||
                 "IF".equals(child.getNodeType())) {
                 
-                generateInstruction(child);
-                targetCode.append("\n");
+                String instruction = generateInstructionCode(child);
+                if (!instruction.isEmpty()) {
+                    addLine(instruction);
+                }
             } else if ("ALGO".equals(child.getNodeType())) {
                 generateAlgo(child);
             }
         }
     }
     
-    private void generateInstruction(ASTNode instr) {
+    private String generateInstructionCode(ASTNode instr) {
         String nodeType = instr.getNodeType();
         
         switch (nodeType) {
             case "HALT":
-                generateHalt();
-                break;
+                return "END";
             case "PRINT":
-                generatePrint(instr);
-                break;
+                return generatePrintCode(instr);
             case "ASSIGN":
-                generateAssign(instr);
-                break;
+                return generateAssignCode(instr);
             case "WHILE":
-                generateWhile(instr);
-                break;
+                return generateWhileCode(instr);
             case "DO":
-                generateDo(instr);
-                break;
+                return generateDoCode(instr);
             case "IF":
-                generateIf(instr);
-                break;
+                return generateIfCode(instr);
             case "PROC_CALL":
-                generateProcedureCall(instr);
-                break;
+                return generateProcedureCallCode(instr);
+            default:
+                return "";
         }
     }
     
-    private void generateHalt() {
-        // Translation Advice: Trans(halt) is { target_code = " STOP "; return(target_code); }
-        targetCode.append("STOP");
+    private String generatePrintCode(ASTNode printNode) {
+        if (printNode.getChildren().isEmpty()) {
+            return "";
+        }
+        
+        ASTNode outputNode = printNode.getChildren().get(0);
+        String code = "";
+        
+        if ("STRING".equals(outputNode.getNodeType())) {
+            // Handle string literals directly
+            String value = outputNode.getValue();
+            code = value;
+        } else if ("ATOM".equals(outputNode.getNodeType())) {
+            if (outputNode.getValue() != null) {
+                // Check if it's a string (starts and ends with quotes) or number
+                String value = outputNode.getValue();
+                if (value.startsWith("\"") && value.endsWith("\"")) {
+                    // It's a string literal - use as is
+                    code = value;
+                } else if (isNumeric(value)) {
+                    // It's a number
+                    code = value;
+                } else {
+                    // It's some other literal value
+                    code = value;
+                }
+            } else if (!outputNode.getChildren().isEmpty() && 
+                       "VAR".equals(outputNode.getChildren().get(0).getNodeType())) {
+                // It's a variable - lookup in symbol table
+                String varName = outputNode.getChildren().get(0).getValue();
+                SymbolTableEntry entry = symbolTable.lookup(varName);
+                if (entry != null) {
+                    code = entry.getName();
+                } else {
+                    code = varName;
+                }
+            }
+        }
+        
+        return "PRINT " + code;
+    }
+    
+    private String generateAssignCode(ASTNode assignNode) {
+        if (assignNode.getChildren().size() >= 2) {
+            ASTNode varNode = assignNode.getChildren().get(0);
+            ASTNode rightSide = assignNode.getChildren().get(1);
+            
+            if ("VAR".equals(varNode.getNodeType())) {
+                String varName = varNode.getValue();
+                SymbolTableEntry entry = symbolTable.lookup(varName);
+                String targetVar = (entry != null) ? entry.getName() : varName;
+                
+                StringBuilder assignment = new StringBuilder();
+                assignment.append(targetVar).append(" = ");
+                
+                if ("FUNC_CALL".equals(rightSide.getNodeType())) {
+                    assignment.append(generateFunctionCallCode(rightSide));
+                } else {
+                    assignment.append(generateTermCode(rightSide));
+                }
+                
+                return assignment.toString();
+            }
+        }
+        return "";
+    }
+    
+    private String generateTermCode(ASTNode term) {
+        if (term == null) return "";
+        
+        String nodeType = term.getNodeType();
+        
+        switch (nodeType) {
+            case "ATOM":
+                return generateAtomCode(term);
+            case "UNOP_EXPR":
+                return generateUnaryExpressionCode(term);
+            case "BINOP_EXPR":
+                return generateBinaryExpressionCode(term);
+            default:
+                return "";
+        }
+    }
+    
+    private String generateAtomCode(ASTNode atom) {
+        if (atom.getValue() != null) {
+            // It's a number or literal
+            if (isNumeric(atom.getValue())) {
+                return atom.getValue();
+            } else {
+                return atom.getValue();
+            }
+        } else if (!atom.getChildren().isEmpty() && 
+                   "VAR".equals(atom.getChildren().get(0).getNodeType())) {
+            // It's a variable
+            String varName = atom.getChildren().get(0).getValue();
+            SymbolTableEntry entry = symbolTable.lookup(varName);
+            if (entry != null) {
+                return entry.getName();
+            } else {
+                return varName;
+            }
+        }
+        return "";
+    }
+    
+    private String generateUnaryExpressionCode(ASTNode unopExpr) {
+        if (unopExpr.getChildren().size() < 2) return "";
+        
+        ASTNode unopNode = unopExpr.getChildren().get(0);
+        ASTNode termNode = unopExpr.getChildren().get(1);
+        
+        String operator = unopNode.getValue();
+        String basicOp = translateUnaryOperator(operator);
+        
+        return basicOp + " " + generateTermCode(termNode);
+    }
+    
+    private String generateBinaryExpressionCode(ASTNode binopExpr) {
+        if (binopExpr.getChildren().size() < 3) return "";
+        
+        ASTNode leftTerm = binopExpr.getChildren().get(0);
+        ASTNode binopNode = binopExpr.getChildren().get(1);
+        ASTNode rightTerm = binopExpr.getChildren().get(2);
+        
+        String leftCode = generateTermCode(leftTerm);
+        String operator = binopNode.getValue();
+        String rightCode = generateTermCode(rightTerm);
+        
+        return leftCode + " " + translateBinaryOperator(operator) + " " + rightCode;
+    }
+    
+    private String generateFunctionCallCode(ASTNode funcCall) {
+        return "REM Function call placeholder";
+    }
+    
+    private String generateWhileCode(ASTNode whileNode) {
+        if (whileNode.getChildren().size() >= 2) {
+            StringBuilder result = new StringBuilder();
+            result.append("WHILE ").append(generateTermCode(whileNode.getChildren().get(0)));
+            addLine(result.toString());
+            generateAlgo(whileNode.getChildren().get(1));
+            addLine("WEND");
+            return "";
+        }
+        return "";
+    }
+    
+    private String generateDoCode(ASTNode doNode) {
+        if (doNode.getChildren().size() >= 2) {
+            addLine("DO");
+            generateAlgo(doNode.getChildren().get(0));
+            StringBuilder result = new StringBuilder();
+            result.append("LOOP UNTIL ").append(generateTermCode(doNode.getChildren().get(1)));
+            addLine(result.toString());
+            return "";
+        }
+        return "";
+    }
+    
+    private String generateIfCode(ASTNode ifNode) {
+        if (ifNode.getChildren().size() >= 2) {
+            StringBuilder result = new StringBuilder();
+            result.append("IF ").append(generateTermCode(ifNode.getChildren().get(0))).append(" THEN");
+            addLine(result.toString());
+            generateAlgo(ifNode.getChildren().get(1));
+            
+            if (ifNode.getChildren().size() >= 3) {
+                addLine("ELSE");
+                generateAlgo(ifNode.getChildren().get(2));
+            }
+            addLine("END IF");
+            return "";
+        }
+        return "";
+    }
+    
+    private String generateProcedureCallCode(ASTNode procCall) {
+        return "REM Procedure call placeholder";
     }
     
     private void generatePrint(ASTNode printNode) {
@@ -349,7 +531,7 @@ public class CodeGenerator {
     
     private String translateUnaryOperator(String spOperator) {
         switch (spOperator) {
-            case "neg": return "NEG";
+            case "neg": return "-";
             case "not": return "NOT";
             default: return spOperator.toUpperCase();
         }

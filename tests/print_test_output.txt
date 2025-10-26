@@ -1,7 +1,10 @@
+' SPL Compiler Generated Code
+' Modern BASIC Format
+
 local1 = 42
 global1 = 100
-PRINT "Hello" 
-PRINT local1 
-PRINT global1 
-PRINT 999 
-STOP
+PRINT "Hello"
+PRINT local1
+PRINT global1
+PRINT 999
+END
