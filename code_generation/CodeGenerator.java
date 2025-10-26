@@ -571,22 +571,36 @@ public class CodeGenerator {
     }
     
     private String generateFunctionCallCode(ASTNode funcCall) {
-        // Translation Advice: Function calls are inlined and return a value
+        // Generate function call syntax: functionName(parameters)
         if (funcCall.getChildren().size() >= 2) {
             ASTNode nameNode = funcCall.getChildren().get(0);
             ASTNode inputNode = funcCall.getChildren().get(1);
             
             if ("FNAME".equals(nameNode.getNodeType())) {
                 String funcName = nameNode.getValue();
+                StringBuilder callCode = new StringBuilder();
+                callCode.append(funcName).append("(");
                 
-                // Find the function definition
-                ASTNode funcDef = functionDefinitions.get(funcName);
-                if (funcDef != null) {
-                    // Inline the function and return its result
-                    return inlineFunction(funcDef, inputNode);
-                } else {
-                    return "REM Function " + funcName + " not found";
+                // Add parameters from INPUT node
+                if (inputNode != null && "INPUT".equals(inputNode.getNodeType())) {
+                    boolean first = true;
+                    for (ASTNode child : inputNode.getChildren()) {
+                        if ("MAXTHREE".equals(child.getNodeType())) {
+                            for (ASTNode param : child.getChildren()) {
+                                if ("ATOM".equals(param.getNodeType())) {
+                                    if (!first) {
+                                        callCode.append(", ");
+                                    }
+                                    callCode.append(generateAtomCode(param));
+                                    first = false;
+                                }
+                            }
+                        }
+                    }
                 }
+                
+                callCode.append(")");
+                return callCode.toString();
             }
         }
         return "REM Invalid function call";

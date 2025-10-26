@@ -10,7 +10,7 @@ END FUNCTION
 
 DIM x AS INTEGER
 
-x = y
+x = size(x)
 WHILE NOT x = 5
 x = x + 1
 WEND
