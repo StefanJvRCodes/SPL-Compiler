@@ -1,4 +1,7 @@
 import java.io.*;
+// Import all required compiler classes
+import java.nio.file.*;
+import java.util.*;
 
 public class SPLCompilerSubmission {
     public static void main(String[] args) {
