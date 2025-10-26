@@ -275,10 +275,11 @@ public class SPLInterface {
     
     private static String getTokenType(String token) {
         if (token.matches("glob|proc|func|main|var|halt|print")) return "KEYWORD";
-        if (token.matches("[{}]")) return "DELIMITER";
+        if (token.matches("[{}()]")) return "DELIMITER";
         if (token.matches("[=;]")) return "OPERATOR";
         if (token.matches("\\d+")) return "LITERAL";
-        if (token.matches("[a-zA-Z][a-zA-Z0-9]*")) return "IDENTIFIER";
+        if (token.startsWith("\"") && token.endsWith("\"")) return "STRING";
+        if (token.matches("[a-z][a-z]*[0-9]*")) return "IDENTIFIER";
         return "UNKNOWN";
     }
     
@@ -288,6 +289,7 @@ public class SPLInterface {
         if (token.equals("=")) return "Assignment operator";
         if (token.equals(";")) return "Statement terminator";
         if (token.matches("\\d+")) return "Numeric constant";
+        if (token.startsWith("\"") && token.endsWith("\"")) return "String literal";
         if (token.matches("[a-zA-Z][a-zA-Z0-9]*")) return "Variable name";
         return "Unknown token";
     }

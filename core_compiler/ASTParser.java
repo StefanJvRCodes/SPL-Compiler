@@ -396,21 +396,40 @@ public class ASTParser {
                 return node; // Empty maxthree
             }
 
-            if (isLegal(currToken)) {
-                ASTNode varNode = new ASTNode("VAR", currToken);
-                node.addChild(varNode);
+            // Accept ATOM (variable or number) instead of just variable
+            if (isLegal(currToken) || isNumeric(currToken)) {
+                ASTNode atomNode;
+                if (isNumeric(currToken)) {
+                    atomNode = new ASTNode("ATOM", currToken);
+                } else {
+                    atomNode = new ASTNode("ATOM");
+                    atomNode.addChild(new ASTNode("VAR", currToken));
+                }
+                node.addChild(atomNode);
                 
-                // Try to parse second variable
+                // Try to parse second atom
                 currToken = tf.next();
-                if (currToken != null && isLegal(currToken)) {
-                    ASTNode varNode2 = new ASTNode("VAR", currToken);
-                    node.addChild(varNode2);
+                if (currToken != null && (isLegal(currToken) || isNumeric(currToken))) {
+                    ASTNode atomNode2;
+                    if (isNumeric(currToken)) {
+                        atomNode2 = new ASTNode("ATOM", currToken);
+                    } else {
+                        atomNode2 = new ASTNode("ATOM");
+                        atomNode2.addChild(new ASTNode("VAR", currToken));
+                    }
+                    node.addChild(atomNode2);
                     
-                    // Try to parse third variable
+                    // Try to parse third atom
                     currToken = tf.next();
-                    if (currToken != null && isLegal(currToken)) {
-                        ASTNode varNode3 = new ASTNode("VAR", currToken);
-                        node.addChild(varNode3);
+                    if (currToken != null && (isLegal(currToken) || isNumeric(currToken))) {
+                        ASTNode atomNode3;
+                        if (isNumeric(currToken)) {
+                            atomNode3 = new ASTNode("ATOM", currToken);
+                        } else {
+                            atomNode3 = new ASTNode("ATOM");
+                            atomNode3.addChild(new ASTNode("VAR", currToken));
+                        }
+                        node.addChild(atomNode3);
                     } else {
                         tf.prepend(currToken);
                     }
@@ -458,6 +477,28 @@ public class ASTParser {
         }
     }
     
+    public static ASTNode parseOUTPUT(TokenFeeder tf) {
+        try {
+            String currToken = tf.next();
+            if (currToken == null) {
+                throw new Exception("Unexpected end of input");
+            }
+            
+            // Check if it's a string literal
+            if (isStringLiteral(currToken)) {
+                ASTNode node = new ASTNode("STRING", currToken);
+                return node;
+            }
+            
+            // Otherwise, put the token back and parse as ATOM
+            tf.prepend(currToken);
+            return parseATOM(tf);
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+            return null;
+        }
+    }
+
     public static ASTNode parseATOM(TokenFeeder tf) {
         try {
             ASTNode node = new ASTNode("ATOM");
@@ -493,10 +534,22 @@ public class ASTParser {
             if (instr != null) {
                 node.addChild(instr);
                 
+                // Check what comes next
                 String currToken = tf.next();
+                
+                // If it's a semicolon, we have INSTR ; ALGO
                 if (currToken != null && ";".equals(currToken)) {
-                    node.addChild(parseALGO(tf)); // Recursive call
+                    ASTNode nextAlgo = parseALGO(tf);
+                    if (nextAlgo != null) {
+                        node.addChild(nextAlgo);
+                    }
                 } else {
+                    // If it's not a semicolon, check if it's a valid terminator
+                    if (currToken != null && !"}".equals(currToken)) {
+                        // This is where we should report the semicolon error
+                        throw new Exception("Expected ';', found: " + currToken);
+                    }
+                    // Put the token back for the caller to handle
                     tf.prepend(currToken);
                 }
             }
@@ -519,7 +572,7 @@ public class ASTParser {
                 return new ASTNode("HALT");
             } else if ("print".equals(currToken)) {
                 ASTNode node = new ASTNode("PRINT");
-                node.addChild(parseATOM(tf));
+                node.addChild(parseOUTPUT(tf));
                 return node;
             } else if ("while".equals(currToken) || "do".equals(currToken)) {
                 tf.prepend(currToken);
@@ -527,6 +580,28 @@ public class ASTParser {
             } else if ("if".equals(currToken)) {
                 tf.prepend(currToken);
                 return parseBRANCH(tf);
+            } else if (isLegal(currToken)) {
+                // Could be assignment or procedure call
+                String nextToken = tf.next();
+                if ("(".equals(nextToken)) {
+                    // This is a procedure call: NAME(INPUT)
+                    ASTNode procCallNode = new ASTNode("PROC_CALL");
+                    ASTNode procNameNode = new ASTNode("PNAME", currToken);
+                    procCallNode.addChild(procNameNode);
+                    procCallNode.addChild(parseINPUT(tf));
+                    
+                    String closeToken = tf.next();
+                    if (!")".equals(closeToken)) {
+                        throw new Exception("Expected ')', found: " + closeToken);
+                    }
+                    
+                    return procCallNode;
+                } else {
+                    // It's an assignment, put tokens back
+                    tf.prepend(nextToken);
+                    tf.prepend(currToken);
+                    return parseASSIGN(tf);
+                }
             } else {
                 tf.prepend(currToken);
                 return parseASSIGN(tf);
@@ -551,8 +626,38 @@ public class ASTParser {
                     throw new Exception("Expected '=', found: " + currToken);
                 }
                 
-                node.addChild(parseTERM(tf));
-                return node;
+                // Look ahead to see if this is a function call or regular TERM
+                String nextToken = tf.next();
+                if (nextToken != null && isLegal(nextToken)) {
+                    // Check if the next token after the function name is '('
+                    String afterName = tf.next();
+                    if ("(".equals(afterName)) {
+                        // This is a function call: VAR = NAME(INPUT)
+                        ASTNode funcCallNode = new ASTNode("FUNC_CALL");
+                        ASTNode funcNameNode = new ASTNode("FNAME", nextToken);
+                        funcCallNode.addChild(funcNameNode);
+                        funcCallNode.addChild(parseINPUT(tf));
+                        
+                        currToken = tf.next();
+                        if (!")".equals(currToken)) {
+                            throw new Exception("Expected ')', found: " + currToken);
+                        }
+                        
+                        node.addChild(funcCallNode);
+                        return node;
+                    } else {
+                        // Not a function call, put tokens back and parse as TERM
+                        tf.prepend(afterName);
+                        tf.prepend(nextToken);
+                        node.addChild(parseTERM(tf));
+                        return node;
+                    }
+                } else {
+                    // Put token back and parse as TERM
+                    tf.prepend(nextToken);
+                    node.addChild(parseTERM(tf));
+                    return node;
+                }
             } else {
                 throw new Exception("Expected variable name, found: " + currToken);
             }
@@ -668,34 +773,60 @@ public class ASTParser {
                 throw new Exception("Unexpected end of input");
             }
             
-            if ("neg".equals(currToken) || "not".equals(currToken)) {
-                ASTNode node = new ASTNode("UNOP", currToken);
-                node.addChild(parseATOM(tf));
-                return node;
-            } else if ("(".equals(currToken)) {
-                ASTNode node = new ASTNode("BINOP_EXPR");
-                node.addChild(parseTERM(tf));
+            if ("(".equals(currToken)) {
+                // Could be ( UNOP TERM ) or ( TERM BINOP TERM )
+                String nextToken = tf.next();
                 
-                currToken = tf.next();
-                if (isBinaryOperator(currToken)) {
+                if ("neg".equals(nextToken) || "not".equals(nextToken)) {
+                    // ( UNOP TERM )
+                    ASTNode node = new ASTNode("UNOP_EXPR");
+                    ASTNode unopNode = new ASTNode("UNOP", nextToken);
+                    node.addChild(unopNode);
+                    node.addChild(parseTERM(tf));
+                    
+                    currToken = tf.next();
+                    if (!")".equals(currToken)) {
+                        throw new Exception("Expected ')', found: " + currToken);
+                    }
+                    return node;
+                } else {
+                    // ( TERM BINOP TERM )
+                    tf.prepend(nextToken); // Put back the token
+                    
+                    ASTNode node = new ASTNode("BINOP_EXPR");
+                    node.addChild(parseTERM(tf)); // First TERM
+                    
+                    currToken = tf.next();
+                    if (!isBinaryOperator(currToken)) {
+                        throw new Exception("Expected binary operator, found: " + currToken);
+                    }
                     ASTNode binopNode = new ASTNode("BINOP", currToken);
                     node.addChild(binopNode);
-                } else {
-                    throw new Exception("Expected binary operator, found: " + currToken);
+                    
+                    node.addChild(parseTERM(tf)); // Second TERM
+                    
+                    currToken = tf.next();
+                    if (!")".equals(currToken)) {
+                        throw new Exception("Expected ')', found: " + currToken);
+                    }
+                    return node;
                 }
-                
-                node.addChild(parseTERM(tf));
-                
-                currToken = tf.next();
-                if (!")".equals(currToken)) {
-                    throw new Exception("Expected ')', found: " + currToken);
-                }
-                
-                return node;
             } else {
+                // TERM ::= ATOM
                 tf.prepend(currToken);
                 return parseATOM(tf);
             }
+        } catch (Exception e) {
+            System.out.println("Syntax error: " + e.getMessage());
+            return null;
+        }
+    }
+    
+    public static ASTNode parseINPUT(TokenFeeder tf) {
+        try {
+            ASTNode node = new ASTNode("INPUT");
+            node.addChild(parseMAXTHREE(tf));
+            return node;
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
             return null;
@@ -734,5 +865,27 @@ public class ASTParser {
         return "eq".equals(str) || ">".equals(str) || "or".equals(str) || 
                "and".equals(str) || "plus".equals(str) || "minus".equals(str) || 
                "mult".equals(str) || "div".equals(str);
+    }
+    
+    private static boolean isStringLiteral(String str) {
+        // String must start and end with quotes
+        if (str == null || str.length() < 2) {
+            return false;
+        }
+        
+        if (!str.startsWith("\"") || !str.endsWith("\"")) {
+            return false;
+        }
+        
+        // Extract content without quotes
+        String content = str.substring(1, str.length() - 1);
+        
+        // Check max length 15 (content only, not including quotes)
+        if (content.length() > 15) {
+            return false;
+        }
+        
+        // Check content contains only letters and digits
+        return content.matches("[a-zA-Z0-9]*");
     }
 }

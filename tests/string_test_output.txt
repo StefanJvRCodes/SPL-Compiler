@@ -1,0 +1,4 @@
+a = 42
+PRINT "Hello" 
+PRINT a 
+STOP

@@ -145,6 +145,9 @@ public class CodeGenerator {
             case "IF":
                 generateIf(instr);
                 break;
+            case "PROC_CALL":
+                generateProcedureCall(instr);
+                break;
         }
     }
     
@@ -162,7 +165,11 @@ public class CodeGenerator {
         ASTNode outputNode = printNode.getChildren().get(0);
         String code = "";
         
-        if ("ATOM".equals(outputNode.getNodeType())) {
+        if ("STRING".equals(outputNode.getNodeType())) {
+            // Handle string literals directly
+            String value = outputNode.getValue();
+            code = " " + value + " ";
+        } else if ("ATOM".equals(outputNode.getNodeType())) {
             if (outputNode.getValue() != null) {
                 // Check if it's a string (starts and ends with quotes) or number
                 String value = outputNode.getValue();
@@ -198,7 +205,7 @@ public class CodeGenerator {
         
         if (assignNode.getChildren().size() >= 2) {
             ASTNode varNode = assignNode.getChildren().get(0);
-            ASTNode termNode = assignNode.getChildren().get(1);
+            ASTNode rightSide = assignNode.getChildren().get(1);
             
             if ("VAR".equals(varNode.getNodeType())) {
                 String varName = varNode.getValue();
@@ -206,7 +213,12 @@ public class CodeGenerator {
                 String targetVar = (entry != null) ? entry.getName() : varName;
                 
                 targetCode.append(targetVar).append(" = ");
-                generateTerm(termNode);
+                
+                if ("FUNC_CALL".equals(rightSide.getNodeType())) {
+                    generateFunctionCall(rightSide);
+                } else {
+                    generateTerm(rightSide);
+                }
             }
         }
     }
@@ -246,10 +258,19 @@ public class CodeGenerator {
                 generateAtom(term);
                 break;
             case "UNOP":
-                generateUnaryOperation(term);
+                // Legacy UNOP handling - should use UNOP_EXPR instead
+                if (term.getChildren().size() > 0) {
+                    String operator = term.getValue();
+                    String basicOp = translateUnaryOperator(operator);
+                    targetCode.append(basicOp).append(" ");
+                    generateTerm(term.getChildren().get(0));
+                }
+                break;
+            case "UNOP_EXPR":
+                generateUnaryExpression(term);
                 break;
             case "BINOP_EXPR":
-                generateBinaryOperation(term);
+                generateBinaryExpression(term);
                 break;
             default:
                 // Fallback for other term types
@@ -260,30 +281,6 @@ public class CodeGenerator {
         }
     }
     
-    private void generateUnaryOperation(ASTNode unopNode) {
-        if (unopNode.getChildren().isEmpty()) return;
-        
-        String operator = unopNode.getValue();
-        ASTNode operand = unopNode.getChildren().get(0);
-        
-        targetCode.append("(").append(operator).append(" ");
-        generateTerm(operand);
-        targetCode.append(")");
-    }
-    
-    private void generateBinaryOperation(ASTNode binopExpr) {
-        if (binopExpr.getChildren().size() >= 3) {
-            ASTNode leftOperand = binopExpr.getChildren().get(0);
-            ASTNode operator = binopExpr.getChildren().get(1);
-            ASTNode rightOperand = binopExpr.getChildren().get(2);
-            
-            targetCode.append("(");
-            generateTerm(leftOperand);
-            targetCode.append(" ").append(operator.getValue()).append(" ");
-            generateTerm(rightOperand);
-            targetCode.append(")");
-        }
-    }
     
     private void generateWhile(ASTNode whileNode) {
         if (whileNode.getChildren().size() >= 2) {
@@ -317,6 +314,83 @@ public class CodeGenerator {
                 targetCode.append(" ELSE { ");
                 generateAlgo(ifNode.getChildren().get(2));
                 targetCode.append(" } ");
+            }
+        }
+    }
+    
+    private void generateUnaryExpression(ASTNode unopExpr) {
+        // Handle ( UNOP TERM ) structure
+        if (unopExpr.getChildren().size() < 2) return;
+        
+        ASTNode unopNode = unopExpr.getChildren().get(0);
+        ASTNode termNode = unopExpr.getChildren().get(1);
+        
+        String operator = unopNode.getValue();
+        String basicOp = translateUnaryOperator(operator);
+        
+        targetCode.append(basicOp).append(" ");
+        generateTerm(termNode);
+    }
+    
+    private void generateBinaryExpression(ASTNode binopExpr) {
+        // Handle ( TERM BINOP TERM ) structure
+        if (binopExpr.getChildren().size() < 3) return;
+        
+        ASTNode leftTerm = binopExpr.getChildren().get(0);
+        ASTNode binopNode = binopExpr.getChildren().get(1);
+        ASTNode rightTerm = binopExpr.getChildren().get(2);
+        
+        generateTerm(leftTerm);
+        String operator = binopNode.getValue();
+        targetCode.append(" ").append(translateBinaryOperator(operator)).append(" ");
+        generateTerm(rightTerm);
+    }
+    
+    
+    private String translateUnaryOperator(String spOperator) {
+        switch (spOperator) {
+            case "neg": return "NEG";
+            case "not": return "NOT";
+            default: return spOperator.toUpperCase();
+        }
+    }
+    
+    private String translateBinaryOperator(String spOperator) {
+        switch (spOperator) {
+            case "plus": return "+";
+            case "minus": return "-";
+            case "mult": return "*";
+            case "div": return "/";
+            case "eq": return "=";
+            case ">": return ">";
+            case "and": return "AND";
+            case "or": return "OR";
+            default: return spOperator.toUpperCase();
+        }
+    }
+
+    private void generateFunctionCall(ASTNode funcCall) {
+        // Translation Advice: Function calls are inlined
+        // For now, generate a placeholder comment
+        if (funcCall.getChildren().size() >= 1) {
+            ASTNode nameNode = funcCall.getChildren().get(0);
+            if ("FNAME".equals(nameNode.getNodeType())) {
+                String funcName = nameNode.getValue();
+                targetCode.append("/* CALL ").append(funcName).append("() */");
+                // TODO: Implement function inlining
+            }
+        }
+    }
+    
+    private void generateProcedureCall(ASTNode procCall) {
+        // Translation Advice: Procedure calls are inlined
+        // For now, generate a placeholder comment
+        if (procCall.getChildren().size() >= 1) {
+            ASTNode nameNode = procCall.getChildren().get(0);
+            if ("PNAME".equals(nameNode.getNodeType())) {
+                String procName = nameNode.getValue();
+                targetCode.append("/* CALL ").append(procName).append("() */");
+                // TODO: Implement procedure inlining
             }
         }
     }

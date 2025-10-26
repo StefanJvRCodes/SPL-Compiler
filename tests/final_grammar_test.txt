@@ -1,0 +1,32 @@
+glob { global1 global2 }
+proc { }
+func { }
+main {
+    var { counter result flag }
+    print "Hello" ;
+    counter = 10 ;
+    result = 0 ;
+    flag = 1 ;
+    result = (counter plus 5) ;
+    print result ;
+    result = (neg counter) ;
+    print result ;
+    result = (counter mult (flag plus 2)) ;
+    print result ;
+    if (counter > 5) {
+        print "Large" ;
+        flag = 0
+    } else {
+        print "Small" ;
+        flag = 1
+    } ;
+    while (counter > 0) {
+        print counter ;
+        counter = (counter minus 1)
+    } ;
+    do {
+        print "Loop" ;
+        flag = (flag plus 1)
+    } until (flag eq 5) ;
+    halt
+}

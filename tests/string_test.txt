@@ -1,0 +1,10 @@
+glob { x } 
+proc { } 
+func { } 
+main { 
+    var { a } 
+    a = 42 ; 
+    print "Hello" ; 
+    print a ; 
+    halt 
+}

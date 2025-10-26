@@ -1,0 +1,66 @@
+glob { global1 global2 }
+proc { 
+    testproc(param1) { 
+        local { temp } 
+        print "Testing procedure" ;
+        print param1 
+    }
+}
+func { 
+    addfunc(x y) { 
+        local { result } 
+        result = (x plus y) ; 
+        return result 
+    }
+}
+main {
+    var { counter result flag }
+    
+    // Test string literals
+    print "Starting SPL test" ;
+    
+    // Test basic assignments
+    counter = 10 ;
+    result = 0 ;
+    flag = 1 ;
+    
+    // Test complex expressions
+    result = (counter plus 5) ;
+    print result ;
+    
+    result = (neg counter) ;
+    print result ;
+    
+    result = (counter mult (flag plus 2)) ;
+    print result ;
+    
+    // Test function calls
+    result = addfunc ( counter 15 ) ;
+    print result ;
+    
+    // Test procedure calls
+    testproc ( result ) ;
+    
+    // Test control structures
+    if (counter > 5) {
+        print "Counter is large" ;
+        flag = 0
+    } else {
+        print "Counter is small" ;
+        flag = 1
+    } ;
+    
+    // Test while loop
+    while (counter > 0) {
+        print counter ;
+        counter = (counter minus 1)
+    } ;
+    
+    // Test do-until loop
+    do {
+        print "Looping" ;
+        flag = (flag plus 1)
+    } until (flag eq 5) ;
+    
+    halt
+}

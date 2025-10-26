@@ -23,9 +23,57 @@ public class TokenFeeder {
         tokens = new Vector<String>();
         try {
             Scanner scanner = new Scanner(new File(filename));
+            scanner.useDelimiter(""); // Read character by character
+            
+            StringBuilder currentToken = new StringBuilder();
+            boolean inString = false;
+            
             while (scanner.hasNext()) {
-                tokens.add(scanner.next());
+                String ch = scanner.next();
+                
+                if (ch.equals("\"")) {
+                    if (inString) {
+                        // End of string
+                        currentToken.append(ch);
+                        tokens.add(currentToken.toString());
+                        currentToken = new StringBuilder();
+                        inString = false;
+                    } else {
+                        // Start of string - save any existing token first
+                        if (currentToken.length() > 0) {
+                            tokens.add(currentToken.toString());
+                            currentToken = new StringBuilder();
+                        }
+                        currentToken.append(ch);
+                        inString = true;
+                    }
+                } else if (inString) {
+                    // Inside string, add everything
+                    currentToken.append(ch);
+                } else if (ch.matches("\\s")) {
+                    // Whitespace outside string - end current token
+                    if (currentToken.length() > 0) {
+                        tokens.add(currentToken.toString());
+                        currentToken = new StringBuilder();
+                    }
+                } else if (ch.matches("[{}();=]")) {
+                    // Special delimiter/operator - save current token first, then add delimiter
+                    if (currentToken.length() > 0) {
+                        tokens.add(currentToken.toString());
+                        currentToken = new StringBuilder();
+                    }
+                    tokens.add(ch);
+                } else {
+                    // Regular character
+                    currentToken.append(ch);
+                }
             }
+            
+            // Add final token if any
+            if (currentToken.length() > 0) {
+                tokens.add(currentToken.toString());
+            }
+            
             scanner.close();
         } catch (FileNotFoundException e) {
             System.err.println("Error: Cannot read file " + filename);

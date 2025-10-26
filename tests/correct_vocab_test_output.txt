@@ -1,0 +1,3 @@
+validvar = 10
+PRINT validvar 
+STOP

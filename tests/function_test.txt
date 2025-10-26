@@ -1,0 +1,22 @@
+glob { x y }
+proc { 
+    test(a) { 
+        local { b } 
+        print a 
+    }
+}
+func { 
+    add(x y) { 
+        local { result } 
+        result = (x plus y) ; 
+        return result 
+    }
+}
+main {
+    var { a result }
+    a = 10 ;
+    result = add(a 5) ;
+    print result ;
+    test(result) ;
+    halt
+}

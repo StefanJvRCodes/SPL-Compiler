@@ -1,0 +1,23 @@
+glob { x y }
+proc { }
+func { }
+main {
+    var { a b result }
+    a = 10 ;
+    if (a > 5) {
+        print "Large" ;
+        b = 20
+    } else {
+        print "Small" ;
+        b = 1
+    } ;
+    while (a > 0) {
+        print a ;
+        a = (a minus 1)
+    } ;
+    do {
+        print "Loop" ;
+        b = (b minus 1)
+    } until (b eq 0) ;
+    halt
+}

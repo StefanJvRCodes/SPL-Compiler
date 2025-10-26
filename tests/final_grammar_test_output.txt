@@ -1,0 +1,22 @@
+PRINT "Hello" 
+counter = 10
+result = 0
+flag = 1
+result = counter + 5
+PRINT result 
+result = NEG counter
+PRINT result 
+result = counter * flag + 2
+PRINT result 
+ IF counter > 5 THEN { PRINT "Large" 
+flag = 0
+ }  ELSE { PRINT "Small" 
+flag = 1
+ } 
+ WHILE counter > 0 DO { PRINT counter 
+counter = counter - 1
+ } 
+ DO { PRINT "Loop" 
+flag = flag + 1
+ } UNTIL flag = 5 
+STOP

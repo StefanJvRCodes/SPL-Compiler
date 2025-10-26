@@ -1,0 +1,9 @@
+glob { x1 y2 }
+proc { }
+func { }
+main {
+    var { validVar invalid_var CapitalVar number123 }
+    validVar = 10 ;
+    print validVar ;
+    halt
+}
