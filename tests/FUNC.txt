@@ -18,7 +18,7 @@ main {
     while ( not ( x eq 5 ) ) { 
         print x ;
         x = ( x plus 1 ) ; 
-    }
+    } ;
     print x ;
     halt
 }
