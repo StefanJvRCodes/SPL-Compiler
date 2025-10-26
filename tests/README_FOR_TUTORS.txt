@@ -40,7 +40,7 @@ EXPECTED MESSAGES (Type A Project):
 
 SYSTEM REQUIREMENTS:
 -------------------
-- Java 8 or higher
+- Java 23 or higher
 - All .class files must be in same directory as SPLInterface.java
 
 SUBMISSION READY: All required files included, no additional setup needed.
