@@ -43,6 +43,7 @@ public class SPLInterface {
             displayTokenAnalysis(inputFile);
             System.out.println("============================================================");
             
+            System.out.println("Project \"Type F\": ONLY LEXER");
             System.out.println("Tokens accepted");
             System.out.println();
             
@@ -60,6 +61,7 @@ public class SPLInterface {
             
             System.out.println("✓ Parsing completed successfully!");
             System.out.println("✓ AST construction completed!");
+            System.out.println("Project \"Type E\": Complete FRONT-END (including Lexing AND PARSING)");
             System.out.println("Syntax accepted");
             System.out.println();
             
@@ -90,6 +92,7 @@ public class SPLInterface {
             System.out.println("✓ Semantic analysis completed successfully!");
             System.out.println("✓ All SPL scope rules satisfied!");
             System.out.println("✓ Symbol table construction completed!");
+            System.out.println("Project \"Type D\": Front-End PLUS NAME-SCOPE-ANALYSER");
             System.out.println("Variable Naming and Function Naming accepted");
             System.out.println();
             
@@ -119,6 +122,7 @@ public class SPLInterface {
             
             System.out.println("✓ Type checking completed successfully!");
             System.out.println("✓ All type compatibility rules satisfied!");
+            System.out.println("Project \"Type C\": Front-End PLUS complete semantic analysis including TYPE-CHECKER");
             System.out.println("Types accepted");
             System.out.println();
             
@@ -150,6 +154,7 @@ public class SPLInterface {
             
             System.out.println("✓ Code generation completed successfully!");
             System.out.println("✓ BASIC code optimization completed!");
+            System.out.println("Project \"Type A\": Front-End, Semantic Analysis, and Generation of EXECUTABLE BASIC CODE");
             System.out.println("Code generation completed successfully");
             System.out.println("Executable BASIC code written to: " + outputFile);
             System.out.println();
